@@ -1,0 +1,68 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push makes an in-flight run irrelevant.
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege, set here so it applies to every job. Once the repository is
+# public, `pull_request` runs on code from forks; this workflow only reads the
+# tree and needs nothing else. It also never checks out the PR head with a
+# privileged token, so a fork cannot reach anything with it.
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm --prefix dashboard ci
+
+      # Env comes from worker-configuration.d.ts, which wrangler generates from
+      # wrangler.jsonc — and both are gitignored, because the real one holds
+      # account and zone ids. The committed example declares the same bindings,
+      # so it produces the same Env with placeholder values.
+      - run: npx wrangler types --config wrangler.example.jsonc
+
+      # Typecheck both halves: the Worker and the dashboard are separate
+      # tsconfigs, and only the Worker's is covered by the root command.
+      - run: npx tsc --noEmit
+      - run: npm --prefix dashboard run typecheck
+
+      # Unit tests, plus the tenant-boundary tests that run inside workerd
+      # against a real D1 built from migrations/. That build is also the
+      # migration check: a baseline that no longer executes, or that has lost
+      # the FTS5 table and its triggers, fails here rather than on a fresh
+      # install. A separate `d1 migrations apply` would only repeat it, and
+      # would need the gitignored wrangler.jsonc to do so.
+      - run: npx vitest run
+
+      - run: npm run build
+
+  # Catches the failure mode that has actually happened here: a generated
+  # migration that recreates a table, which D1 turns into a cascading delete
+  # because it does not honour PRAGMA foreign_keys=OFF.
+  migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Refuse a migration that drops a table
+        run: |
+          if grep -rn --include='*.sql' -E '^\s*DROP TABLE' migrations/; then
+            echo "::error::A migration drops a table. D1 ignores PRAGMA foreign_keys=OFF, so the drop cascades and silently empties dependent tables. Rewrite it as ALTER TABLE ADD COLUMN."
+            exit 1
+          fi
+          echo "No table drops."

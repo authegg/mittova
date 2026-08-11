@@ -1,0 +1,108 @@
+name: Bug report
+description: Something behaves differently from what the README says it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not report security issues here. Use
+        [a private advisory](https://github.com/authegg/mittova/security/advisories/new)
+        instead, especially for anything that crosses an organization boundary.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part
+      options:
+        - Receiving mail (inbound, Email Routing)
+        - Sending mail (outbound, Email Sending)
+        - Dashboard
+        - Developer API (/api/v1) or webhooks
+        - Setup, deployment or migrations
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+      placeholder: |
+        I sent a message to hello@example.com. I expected it in the inbox.
+        Nothing arrived and the dashboard shows no error.
+    validations:
+      required: true
+
+  - type: textarea
+    id: response
+    attributes:
+      label: The actual request and response, if it is an API or dashboard issue
+      description: >
+        Status code and body, with anything sensitive removed. Please redact API
+        keys, session cookies and real addresses. This is rendered as a code
+        block, so no backticks needed.
+      render: text
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Worker logs
+      description: >
+        `npx wrangler tail` while reproducing, if you can. Redact before pasting.
+      render: text
+
+  - type: markdown
+    attributes:
+      value: |
+        ### Two things that explain most inbound reports
+
+        Worth checking before you file, because neither is a defect:
+
+        - **Email Routing has to be enabled from the Cloudflare dashboard.**
+          Cloudflare returns 403 on the enable endpoint for every scoped API
+          token, so Mittova cannot turn it on for you. Mail does not arrive
+          until it is on.
+        - **The apex MX records must point at `route{1,2,3}.mx.cloudflare.net`.**
+          That is how you can tell receiving is actually live, rather than
+          trusting what the dashboard has stored.
+
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Before filing
+      options:
+        - label: Email Routing is enabled for the domain, and the apex MX records point at Cloudflare
+        - label: The Domains page in the dashboard shows the DNS records as published
+
+  - type: input
+    id: version
+    attributes:
+      label: Commit
+      description: Output of `git rev-parse --short HEAD`.
+      placeholder: f9ed114
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: wrangler and Node versions
+      description: Output of `npx wrangler --version` and `node --version`.
+      placeholder: wrangler 4.120.0, node v22.14.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tenancy
+    attributes:
+      label: How many organizations does this deployment serve?
+      description: >
+        Tenant scoping is where the subtle bugs live here, so this matters more
+        than it looks.
+      options:
+        - One
+        - More than one
+        - Not sure
+    validations:
+      required: true

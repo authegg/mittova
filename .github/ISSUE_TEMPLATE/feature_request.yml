@@ -1,0 +1,46 @@
+name: Feature request
+description: Suggest something Mittova should do
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: >
+        The situation, rather than the feature. What Mittova does today and why
+        it does not get you there is more useful than a proposed solution, since
+        it leaves room for a better one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you have in mind
+      description: Optional. If you already have a shape for it, describe it here.
+
+  - type: markdown
+    attributes:
+      value: |
+        ### Things that are deliberately absent
+
+        These are documented trade-offs rather than gaps, so a request to add
+        them needs to argue against the reasoning in the README:
+
+        - **Bulk or marketing sending.** Cloudflare Email Service is for
+          transactional mail, so there is no broadcast feature.
+        - **Running without Cloudflare DNS.** Email Routing and Email Sending
+          both depend on it.
+        - **An organization as a separate database.** Isolation is enforced in
+          the query layer over one D1 instance. Tenants who need physical
+          separation want separate deployments.
+        - **Restoring a single tenant from the nightly backup.** The backup
+          spans every tenant by design; the per-tenant path is
+          `GET /api/export`.
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: I have read the Limitations section of the README and this is not one of the deliberate omissions

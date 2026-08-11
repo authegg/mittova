@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/authegg/mittova/security/advisories/new
+    about: >
+      Privately, never as a public issue. Anything crossing an organization
+      boundary belongs here.
+  - name: Setup and deployment guide
+    url: https://github.com/authegg/mittova#quick-start
+    about: >
+      The path from an empty Cloudflare account to a working mailbox, including
+      the one step that has to be done from the Cloudflare dashboard.
+  - name: Contributing
+    url: https://github.com/authegg/mittova/blob/main/CONTRIBUTING.md
+    about: >
+      How to run it locally, and the three hazards to know before touching a
+      migration, the tenant boundary or the HTML sanitiser.
