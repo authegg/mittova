@@ -33,7 +33,8 @@
     "test:watch": "vitest",
     "check": "tsc --noEmit && npm --prefix dashboard run typecheck && vitest run",
     "backup:restore": "node scripts/restore.mjs",
-    "test:worker": "vitest run --project worker"
+    "test:worker": "vitest run --project worker",
+    "seed:demo": "node scripts/seed-demo.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

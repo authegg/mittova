@@ -8,7 +8,8 @@
 <h1 align="center">Mittova</h1>
 
 <p align="center">
-  Self-hosted email on Cloudflare Workers.<br>
+  A real mailbox on your own domain — inbox, composer and send API —<br>
+  on Cloudflare Workers, with no server to run and no mail stack to maintain.<br>
   <em>Your domain, your mailbox, your data.</em>
 </p>
 
@@ -26,6 +27,10 @@ is sent through Cloudflare Email Service — DKIM-signed by your own domain.
 
 There is no shared multi-tenant service in the middle. One deployment, one account, your data in
 your own Cloudflare resources.
+
+> Cloudflare Email Service is in **open beta**. Receiving through Email Routing is generally
+> available; sending depends on a beta product, so treat it accordingly before putting a business
+> on it.
 
 <p align="center">
   <picture>
@@ -85,6 +90,25 @@ plaintext is shown once and never again.
 </picture>
 
 </details>
+
+## How it compares
+
+Mittova sits in a gap. Hosted APIs send well but hold your mail and do not let you read it.
+Classic self-hosted mail servers give you everything and a server to defend. Email Routing on its
+own forwards mail but stores nothing.
+
+|  | **Mittova** | Hosted API<br>(Resend, Postmark) | Classic self-hosted<br>(Mailcow, Mail-in-a-Box) | Email Routing<br>on its own |
+|---|---|---|---|---|
+| Where your mail lives | Your Cloudflare account | The vendor's infrastructure | Your server | Nowhere — it is forwarded |
+| Server to run and patch | None | None | A VPS you own | None |
+| IP reputation | Cloudflare's | The vendor's | Yours to build and defend | Cloudflare's |
+| Read and reply to mail | Dashboard, with threading | Not offered | Yes, full mail stack | No |
+| Programmatic send | `POST /api/v1/emails` | Yes | Your own SMTP | No |
+| Several clients, one deployment | Organizations | One account each | One server each | No |
+| Runs your own code on inbound | Yes, it is a Worker | Webhooks only | Yes, with plumbing | Yes, but nothing is stored |
+
+The trade is deliberate: you are choosing to depend on Cloudflare rather than on a vendor or on a
+server. If that dependency is unacceptable, a classic mail server is the honest answer.
 
 ## Requirements
 
@@ -227,7 +251,15 @@ npm --prefix dashboard run dev   # SPA on :5173, proxying /api
 npm test                        # vitest
 npm run check                   # typecheck both packages + tests
 npm run db:generate             # regenerate migrations from src/db/schema.ts
+
+npm run db:apply:local          # apply migrations to the local D1
+npm run seed:demo               # fill it with demo content to click around in
 ```
+
+`seed:demo` is what the screenshots above were taken from: two organizations, three mailboxes,
+some mail. Everything in it is fabricated under `.example`, a reserved TLD, and the password and
+key hashes are placeholders that match no credential. It refuses to run against a remote database,
+because it deletes every row before inserting.
 
 ### Before you commit a migration
 
