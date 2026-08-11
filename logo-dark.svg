@@ -1,0 +1,11 @@
+<!-- Dark-background mark: identical geometry to logo.svg, inked in the dark
+     theme's foreground. Needed because an <img> resolves currentColor to black,
+     which is invisible on GitHub's dark theme. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96"
+     fill="none" color="#f0eee9" stroke="currentColor" stroke-width="1.6"
+     stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Mittova">
+  <title>Mittova</title>
+  <!-- The envelope flap doubles as the letter M. -->
+  <path d="M4 18.6V6.9l8 6.1 8-6.1v11.7"/>
+  <path d="M2.9 18.6h18.2"/>
+</svg>

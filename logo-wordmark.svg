@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" width="200" height="40"
+     role="img" aria-label="Mittova">
+  <title>Mittova</title>
+  <g fill="none" stroke="currentColor" stroke-width="1.6"
+     stroke-linecap="round" stroke-linejoin="round" transform="translate(4 8)">
+    <!-- The envelope flap doubles as the letter M. -->
+    <path d="M4 18.6V6.9l8 6.1 8-6.1v11.7"/>
+    <path d="M2.9 18.6h18.2"/>
+  </g>
+  <text x="34" y="26"
+        font-family="Geist, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif"
+        font-size="20" font-weight="600" letter-spacing="-0.4"
+        fill="currentColor">Mittova</text>
+</svg>
