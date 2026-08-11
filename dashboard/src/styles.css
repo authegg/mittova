@@ -1,0 +1,2286 @@
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+/* ==========================================================================
+   Mittova design tokens
+   Warm monochrome. Colour carries semantic weight only — status, never chrome.
+   ========================================================================== */
+
+:root {
+  --sans: "Geist Variable", "SF Pro Text", "Helvetica Neue", sans-serif;
+  --mono: "Geist Mono Variable", "SF Mono", ui-monospace, monospace;
+
+  /* Warm neutral ramp — every gray shares the same hue. */
+  --canvas: #fbfbfa;
+  --surface: #ffffff;
+  --surface-sunk: #f7f6f3;
+  --line: #e8e6e1;
+  --line-strong: #d9d6cf;
+  --ink: #1a1917;
+  --ink-2: #55524c;
+  --ink-3: #8b877e;
+
+  /* Single accent. Everything else is a status pastel. */
+  --accent: #1a1917;
+  --accent-ink: #ffffff;
+
+  --ok-bg: #edf3ec;
+  --ok-ink: #346538;
+  --warn-bg: #fbf3db;
+  --warn-ink: #956400;
+  --bad-bg: #fdebec;
+  --bad-ink: #9f2f2d;
+  --info-bg: #e1f3fe;
+  --info-ink: #1f6c9f;
+
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+
+  /* One height for every control, so an input and the button beside it line up. */
+  --control-h: 36px;
+  --control-h-sm: 28px;
+
+  --z-header: 10;
+  --z-overlay: 40;
+  /* Above a sheet, because a menu or a picker can be opened from inside one. */
+  --z-menu: 50;
+  --z-toast: 60;
+  --z-modal: 70;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Follows the OS unless data-theme pins it; the explicit selector below wins
+   in both directions so the toggle can override the system preference. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: #121211;
+    --surface: #191918;
+    --surface-sunk: #1f1e1d;
+    --line: #2a2927;
+    --line-strong: #3a3835;
+    --ink: #f0eee9;
+    --ink-2: #a5a19a;
+    --ink-3: #78746c;
+    --accent: #f0eee9;
+    --accent-ink: #121211;
+    --ok-bg: #17251a;
+    --ok-ink: #7fc98a;
+    --warn-bg: #2a2313;
+    --warn-ink: #d6a94a;
+    --bad-bg: #2b1717;
+    --bad-ink: #e88b89;
+    --info-bg: #13232e;
+    --info-ink: #7cc0ea;
+  }
+}
+
+:root[data-theme="dark"] {
+  --canvas: #121211;
+  --surface: #191918;
+  --surface-sunk: #1f1e1d;
+  --line: #2a2927;
+  --line-strong: #3a3835;
+  --ink: #f0eee9;
+  --ink-2: #a5a19a;
+  --ink-3: #78746c;
+
+  --accent: #f0eee9;
+  --accent-ink: #121211;
+
+  --ok-bg: #17251a;
+  --ok-ink: #7fc98a;
+  --warn-bg: #2a2313;
+  --warn-ink: #d6a94a;
+  --bad-bg: #2b1717;
+  --bad-ink: #e88b89;
+  --info-bg: #13232e;
+  --info-ink: #7cc0ea;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Tabular figures everywhere numbers line up in a column. */
+time,
+.num,
+td.num,
+.metric-value,
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-wrap: balance;
+  font-weight: 560;
+}
+
+h1 {
+  font-size: 24px;
+}
+h2 {
+  font-size: 17px;
+}
+h3 {
+  font-size: 14px;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* ------------------------------------------------------------- controls -- */
+
+button {
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  height: var(--control-h);
+  padding: 0 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex: none;
+  transition:
+    background 180ms var(--ease),
+    border-color 180ms var(--ease),
+    transform 120ms var(--ease);
+}
+button:hover:not(:disabled) {
+  background: var(--surface-sunk);
+  border-color: var(--ink-3);
+}
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+button.primary:hover:not(:disabled) {
+  background: var(--ink-2);
+  border-color: var(--ink-2);
+}
+
+button.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-2);
+}
+button.ghost:hover:not(:disabled) {
+  background: var(--surface-sunk);
+  color: var(--ink);
+}
+
+button.danger {
+  color: var(--bad-ink);
+  border-color: var(--line-strong);
+}
+button.danger:hover:not(:disabled) {
+  background: var(--bad-bg);
+  border-color: var(--bad-ink);
+}
+
+button.sm {
+  height: var(--control-h-sm);
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  width: 100%;
+  height: var(--control-h);
+  padding: 0 10px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  transition: border-color 180ms var(--ease);
+}
+input[type="checkbox"],
+input[type="radio"] {
+  height: auto;
+  width: auto;
+  accent-color: var(--ink);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--ink-3);
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+textarea {
+  resize: vertical;
+  height: auto;
+  min-height: 150px;
+  padding: 10px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+label.field {
+  display: grid;
+  gap: 5px;
+}
+label.field > span {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.hint {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+kbd {
+  font-family: var(--mono);
+  font-size: 11px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--r-sm);
+  background: var(--surface-sunk);
+  padding: 1px 5px;
+  color: var(--ink-2);
+}
+
+/* --------------------------------------------------------------- shell --- */
+
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background: color-mix(in srgb, var(--canvas) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.masthead-inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 52px;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-size: 15px;
+  flex: none;
+}
+.wordmark .glyph {
+  width: 18px;
+  height: 18px;
+  color: var(--ink);
+}
+
+/* Holds the scrolling tab row and the settings menu together. The menu cannot
+   live inside the row: overflow-x on a box clips its overflowing children in
+   both axes, so the dropdown was being cut off at the header's height. */
+.nav-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+nav.tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 0 1 auto;
+}
+nav.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+nav.tabs a {
+  position: relative;
+  padding: 6px 10px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color 180ms var(--ease),
+    background 180ms var(--ease);
+}
+nav.tabs a:hover {
+  color: var(--ink);
+  background: var(--surface-sunk);
+}
+nav.tabs a[aria-current="page"] {
+  color: var(--ink);
+  background: var(--surface-sunk);
+}
+nav.tabs a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -9px;
+  height: 1px;
+  background: var(--ink);
+}
+
+.tab-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  margin-left: 5px;
+}
+
+main.page {
+  max-width: 1360px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  flex: 1;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.page-head p {
+  margin: 5px 0 0;
+  color: var(--ink-3);
+  max-width: 62ch;
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------- cards --- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.card-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.card-body {
+  padding: 18px;
+}
+.card-body.tight {
+  padding: 0;
+}
+
+/* Asymmetric metric strip — deliberately not four equal columns. */
+.metrics {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+@media (max-width: 860px) {
+  .metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.metric {
+  background: var(--surface);
+  padding: 16px 18px;
+}
+.metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.metric-value {
+  font-size: 26px;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  margin-top: 4px;
+  line-height: 1.1;
+}
+.metric-sub {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+/* Both cards share the row height, so neither leaves a void beside the other. */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+@media (max-width: 1000px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+.grid-2 > .card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.grid-2 > .card > .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* --------------------------------------------------------------- table --- */
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  /* Fixed layout so declared column widths are honoured and the one unsized
+     column absorbs the rest. Without it, long values widen columns and
+     truncation depends on content. */
+  table-layout: fixed;
+}
+th,
+td {
+  overflow: hidden;
+}
+th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  background: var(--surface);
+}
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+tbody tr:last-child td {
+  border-bottom: none;
+}
+tbody tr.clickable {
+  cursor: pointer;
+  transition: background 140ms var(--ease);
+}
+tbody tr.clickable:hover {
+  background: var(--surface-sunk);
+}
+tbody tr.unread td:nth-child(2),
+tbody tr.unread td:nth-child(3) {
+  font-weight: 580;
+}
+td.num,
+th.num {
+  text-align: right;
+}
+
+/* Row actions sit at the trailing edge.
+   Right aligned so slack in the column falls between the previous column and
+   the buttons, never between the last button and the card edge. Under
+   table-layout:fixed the column is only as wide as declared, and buttons do not
+   shrink, so an under-declared width pushes them straight out over the border
+   instead of wrapping. */
+td.actions > .row {
+  justify-content: flex-end;
+}
+.cell-strong {
+  color: var(--ink);
+}
+.cell-muted {
+  color: var(--ink-3);
+}
+/* Works on a cell or on a block inside one, now that tables are fixed-layout. */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- badges --- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 550;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--surface-sunk);
+  color: var(--ink-2);
+}
+.badge.ok {
+  background: var(--ok-bg);
+  color: var(--ok-ink);
+}
+.badge.warn {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+.badge.bad {
+  background: var(--bad-bg);
+  color: var(--bad-ink);
+}
+.badge.info {
+  background: var(--info-bg);
+  color: var(--info-ink);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+/* ---------------------------------------------------------------- misc --- */
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.toolbar .grow {
+  flex: 1;
+  min-width: 180px;
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search > svg {
+  position: absolute;
+  left: 10px;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.search input {
+  padding-left: 32px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+/* An input paired with a button: the input takes the slack, the button doesn't
+   shrink. Checkboxes are excluded — they must stay their intrinsic size or a
+   checkbox row spreads its label to the far edge. */
+.row > input:not([type="checkbox"]):not([type="radio"]),
+.row > select,
+.row > textarea {
+  min-width: 0;
+  flex: 1;
+}
+.row > input[type="checkbox"],
+.row > input[type="radio"] {
+  flex: none;
+}
+.stack {
+  display: grid;
+  gap: 12px;
+}
+.spread {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.muted {
+  color: var(--ink-3);
+}
+.small {
+  font-size: 12px;
+}
+
+.empty {
+  padding: 56px 24px;
+  text-align: center;
+  color: var(--ink-3);
+}
+.empty h3 {
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.empty p {
+  margin: 0 auto 16px;
+  max-width: 44ch;
+  font-size: 13px;
+}
+.empty .glyph {
+  width: 26px;
+  height: 26px;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+}
+
+.notice {
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--ink-3);
+  background: var(--surface-sunk);
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+}
+.notice.bad {
+  border-left-color: var(--bad-ink);
+  background: var(--bad-bg);
+  color: var(--bad-ink);
+  border-color: transparent;
+}
+.notice.ok {
+  border-left-color: var(--ok-ink);
+  background: var(--ok-bg);
+  color: var(--ok-ink);
+  border-color: transparent;
+}
+
+/* Skeletons match the shape of what is loading, not a spinner. */
+@keyframes shimmer {
+  0% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0.55;
+  }
+}
+.skeleton {
+  background: var(--surface-sunk);
+  border-radius: var(--r-sm);
+  animation: shimmer 1.6s ease-in-out infinite;
+  height: 12px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 420ms var(--ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -------------------------------------------------------------- charts --- */
+
+.chart-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* The plot grows into whatever height the row gives it; gridlines keep a
+   sparse week reading as a low chart rather than an empty box. */
+.chart-plot {
+  position: relative;
+  flex: 1;
+  min-height: 148px;
+}
+
+.chart-grid {
+  position: absolute;
+  inset: 0 0 0 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.chart-grid span {
+  height: 1px;
+  background: var(--line);
+}
+
+.chart-yaxis {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: right;
+  font-size: 10px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.chart-yaxis span {
+  transform: translateY(-50%);
+}
+.chart-yaxis span:last-child {
+  transform: translateY(50%);
+}
+
+.chart {
+  position: absolute;
+  inset: 0 0 0 30px;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+}
+.chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+}
+
+.chart-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin-top: 16px;
+  flex: none;
+}
+.chart-stat {
+  background: var(--surface);
+  padding: 9px 12px;
+}
+.chart-stat dt {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.chart-stat dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.chart-bar {
+  border-radius: 2px;
+  min-height: 2px;
+  transition: opacity 160ms var(--ease);
+}
+.chart-bar.in {
+  background: var(--ink);
+}
+.chart-bar.out {
+  background: var(--line-strong);
+}
+.chart-col:hover .chart-bar {
+  opacity: 0.72;
+}
+.chart-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--ink-3);
+  margin: 8px 0 0 30px;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.legend {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 5px;
+}
+
+/* ---------------------------------------------------------- slide-over --- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 19, 17, 0.32);
+  backdrop-filter: blur(2px);
+  z-index: var(--z-overlay);
+  animation: fade 200ms var(--ease) both;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sheet {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(680px, 100vw);
+  background: var(--canvas);
+  border-left: 1px solid var(--line);
+  z-index: var(--z-overlay);
+  display: flex;
+  flex-direction: column;
+  animation: slide 320ms var(--ease) both;
+}
+@keyframes slide {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.sheet-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex: none;
+}
+.sheet-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.sheet-foot {
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  flex: none;
+  background: var(--surface);
+}
+
+/* ----------------------------------------------------------- key/value --- */
+
+.kv {
+  display: grid;
+  grid-template-columns: 128px 1fr;
+  gap: 6px 16px;
+  font-size: 13px;
+}
+.kv dt {
+  color: var(--ink-3);
+}
+.kv dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.segmented button {
+  border: none;
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink-3);
+  padding: 4px 11px;
+  font-size: 12px;
+}
+.segmented button + button {
+  border-left: 1px solid var(--line);
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--surface-sunk);
+  color: var(--ink);
+}
+
+/* Message timeline — a rail, not a card stack. */
+.timeline {
+  display: grid;
+  gap: 0;
+  position: relative;
+}
+.timeline-item {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 12px;
+  padding-bottom: 16px;
+  position: relative;
+}
+.timeline-item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 14px;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+}
+.timeline-node {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  background: var(--ink);
+  margin-top: 5px;
+  margin-left: 4px;
+  z-index: 1;
+}
+
+.body-frame {
+  width: 100%;
+  min-height: 380px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: #fff;
+}
+pre.body-plain {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 560px;
+  overflow: auto;
+}
+
+.attachment {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------- toast --- */
+
+.toasts {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: var(--z-toast);
+  display: grid;
+  gap: 8px;
+  max-width: 380px;
+}
+.toast {
+  background: var(--ink);
+  color: var(--canvas);
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  animation: rise 260ms var(--ease) both;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.toast.bad {
+  background: var(--bad-ink);
+  color: #fff;
+}
+
+/* --------------------------------------------------------------- login --- */
+
+.gate {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  /* Soft off-centre light source, well under the 0.04 opacity ceiling. */
+  background:
+    radial-gradient(60% 50% at 30% 18%, rgba(26, 25, 23, 0.035), transparent 70%),
+    var(--canvas);
+}
+.gate-card {
+  width: 100%;
+  max-width: 360px;
+}
+.gate-card .wordmark {
+  font-size: 19px;
+  margin-bottom: 6px;
+}
+.gate-card p.lede {
+  color: var(--ink-3);
+  margin: 0 0 22px;
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------- domains --- */
+
+.domain {
+  overflow: hidden;
+}
+
+.domain-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: auto;
+  padding: 13px 16px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+}
+.domain-head:hover {
+  background: var(--surface-sunk);
+  border-color: transparent;
+}
+.domain-name {
+  font-weight: 550;
+  font-size: 13px;
+}
+.domain-head .grow {
+  flex: 1;
+}
+
+/* A chevron drawn in CSS: one glyph, rotates, no icon lookup. */
+.domain-chevron {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-right: 1.6px solid var(--ink-3);
+  border-bottom: 1.6px solid var(--ink-3);
+  transform: rotate(-45deg);
+  transition: transform 200ms var(--ease);
+  margin-left: 2px;
+}
+.domain-chevron.open {
+  transform: rotate(45deg);
+}
+
+.domain-body {
+  padding: 18px 16px 16px;
+  border-top: 1px solid var(--line);
+  animation: rise 260ms var(--ease) both;
+}
+
+/* Record values are long; wrap rather than truncate so they can be read. */
+.record-value {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+
+/* A numbered checklist of what happened and what remains. */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.steps li {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+.steps li::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  border-radius: 50%;
+  border: 1.6px solid var(--line-strong);
+}
+.steps li.done::before {
+  border-color: var(--ok-ink);
+  background: var(--ok-bg);
+}
+.steps li.todo::before {
+  border-color: var(--warn-ink);
+  background: var(--warn-bg);
+}
+.steps li strong {
+  grid-column: 2;
+  font-weight: 550;
+}
+/* Direct child only: a step's body may nest spans of its own, and they should
+   keep their own type styles rather than inheriting the step's. */
+.steps li > span {
+  grid-column: 2;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.steps a {
+  color: var(--info-ink);
+}
+
+/* -------------------------------------------------------------- editor --- */
+
+.editor {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+.editor:focus-within {
+  border-color: var(--ink);
+}
+
+.editor-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-sunk);
+}
+/* Related tools sit together, separated by a hairline rather than a gap. */
+.editor-group {
+  display: flex;
+  gap: 1px;
+}
+.editor-group + .editor-group {
+  margin-left: 5px;
+  padding-left: 6px;
+  border-left: 1px solid var(--line-strong);
+}
+
+button.icon-only {
+  width: 28px;
+  min-width: 28px;
+  padding: 0;
+  color: var(--ink-2);
+}
+.editor-bar button[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--accent-ink);
+}
+.editor-bar button:hover:not([aria-pressed="true"]) {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.editor-body {
+  padding: 12px 14px;
+  outline: none;
+  overflow-y: auto;
+  max-height: 46vh;
+  line-height: 1.6;
+  word-break: break-word;
+}
+/* Placeholder driven by a class, not :empty — a lone <br> or <p> is not empty.
+   Absolutely positioned so it overlays the first line instead of occupying it;
+   in flow it pushed the caret onto a second line. */
+.editor-body {
+  position: relative;
+}
+.editor-body.is-empty::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  color: var(--ink-3);
+  pointer-events: none;
+  user-select: none;
+}
+.editor-body > *:first-child {
+  margin-top: 0;
+}
+.editor-body > *:last-child {
+  margin-bottom: 0;
+}
+.editor-body pre {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  background: var(--surface-sunk);
+  border-radius: var(--r-sm);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+}
+.editor-body h1,
+.editor-body h2,
+.editor-body h3 {
+  margin: 0 0 8px;
+}
+.editor-body p {
+  margin: 0 0 10px;
+}
+.editor-body ul,
+.editor-body ol {
+  margin: 0 0 10px;
+  padding-left: 22px;
+}
+.editor-body blockquote {
+  margin: 0 0 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--line-strong);
+  color: var(--ink-2);
+}
+.editor-body a {
+  color: var(--info-ink);
+}
+
+/* A file input styled to match the button row it sits in. */
+.button-like {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--control-h);
+  padding: 0 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex: none;
+  width: auto;
+  transition: background 180ms var(--ease), border-color 180ms var(--ease);
+}
+.button-like:hover {
+  background: var(--surface-sunk);
+  border-color: var(--ink-3);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: transparent;
+  padding: 0 6px;
+  color: var(--ink-2);
+  font-size: 13px;
+  height: var(--control-h-sm);
+}
+.identity:hover {
+  color: var(--ink);
+  background: var(--surface-sunk);
+}
+.avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--canvas);
+  font-size: 10px;
+  font-weight: 650;
+  display: grid;
+  place-items: center;
+  flex: none;
+  letter-spacing: 0;
+}
+
+/* ----------------------------------------------------------- responsive --- */
+
+@media (max-width: 720px) {
+  .masthead-inner {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    gap: 10px;
+  }
+  /* Wordmark left, account controls right, tabs scrolling beneath. Without the
+     auto margin nothing pushes the account group right once the tabs wrap, so
+     it floats mid-row against a wide gap. */
+  .masthead-inner > .row:last-child {
+    margin-left: auto;
+  }
+
+  .nav-wrap {
+    order: 3;
+    flex-basis: 100%;
+  }
+  nav.tabs {
+    margin-left: -16px;
+    padding: 0 0 2px 16px;
+  }
+  nav.tabs a[aria-current="page"]::after {
+    bottom: -2px;
+  }
+
+  main.page {
+    padding: 20px 16px 56px;
+  }
+
+  .page-head {
+    margin-bottom: 18px;
+  }
+  .page-head h1 {
+    font-size: 21px;
+  }
+
+  .metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+  .metric {
+    padding: 13px 14px;
+  }
+  .metric-value {
+    font-size: 21px;
+  }
+
+  .chart-stats {
+    grid-template-columns: 1fr;
+  }
+
+  /* Toolbars stack instead of squeezing each control to nothing. */
+  .toolbar {
+    align-items: stretch;
+  }
+  .toolbar > * {
+    width: 100%;
+  }
+  .toolbar .segmented {
+    display: flex;
+  }
+  .toolbar .segmented button {
+    flex: 1;
+  }
+
+  .sheet {
+    width: 100vw;
+  }
+  .sheet-foot {
+    flex-wrap: wrap;
+  }
+  .sheet-foot button {
+    flex: 1;
+  }
+
+  .kv {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .kv dt {
+    margin-top: 8px;
+  }
+
+  .toasts {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+}
+.skip-link:focus {
+  left: 12px;
+  top: 12px;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+}
+
+/* ------------------------------------------------------- org switcher --- */
+
+.orgs {
+  position: relative;
+  flex: none;
+}
+.org-trigger {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 200px;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.org-trigger .domain-chevron {
+  transform: rotate(45deg);
+  margin-top: -3px;
+  flex: none;
+}
+.org-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: var(--z-menu);
+  width: 280px;
+  padding: 5px;
+  display: grid;
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  animation: rise 160ms var(--ease) both;
+}
+.org-item {
+  display: grid;
+  /* One full-width column. Without it the implicit track is max-content wide
+     and the global button rule's justify-content:center centres that track, so
+     each item's text starts wherever its own width puts it and the list reads
+     as ragged. text-align alone cannot fix it: the track itself is what moves. */
+  grid-template-columns: 1fr;
+  gap: 1px;
+  width: 100%;
+  height: auto;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  text-align: left;
+}
+.org-item:hover {
+  background: var(--surface-sunk);
+}
+/* A dot rather than a tick: it reads as state, not as a completed action. */
+.org-item.on .org-name::after {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: var(--ok-ink);
+  vertical-align: middle;
+}
+.org-name {
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--ink-1);
+}
+.org-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--line);
+}
+
+/* --------------------------------------------------------- nav overflow --- */
+
+/* The configuration pages, behind one trigger that still reads as a tab when
+   you are on one of them. */
+.navmenu {
+  position: relative;
+  flex: none;
+}
+.navmenu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: auto;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.navmenu-trigger:hover {
+  background: var(--surface-sunk);
+  border-color: transparent;
+  color: var(--ink);
+}
+.navmenu-trigger[aria-current="page"] {
+  background: var(--surface-sunk);
+  color: var(--ink);
+}
+.navmenu-trigger .domain-chevron {
+  width: 6px;
+  height: 6px;
+  border-width: 1.4px;
+  transform: rotate(45deg);
+  margin-top: -3px;
+}
+.navmenu-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: var(--z-menu);
+  min-width: 190px;
+  padding: 5px;
+  display: grid;
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  animation: rise 160ms var(--ease) both;
+}
+/* Applies to both the anchors in the nav menu and the buttons in the template
+   menu, so it has to undo the global button chrome: a border, a fixed control
+   height and centred content are all wrong for a menu row. */
+.navmenu-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  width: 100%;
+  height: auto;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  text-align: left;
+  text-decoration: none;
+}
+.navmenu-item:hover {
+  background: var(--surface-sunk);
+  color: var(--ink);
+}
+.navmenu-item.on {
+  color: var(--ink);
+  font-weight: 550;
+}
+
+/* ---------------------------------------------------- template gallery --- */
+
+.tpl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.tpl-card {
+  display: grid;
+  gap: 10px;
+}
+
+/* The thumbnail is the control: clicking the thing you recognise should open
+   it, rather than making you find a button first. */
+.tpl-thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  /* Light regardless of theme: it is a picture of an email, and email is white.
+     Showing it dark would be a preview of something that does not exist. */
+  background: #fff;
+  transition:
+    border-color 180ms var(--ease),
+    transform 180ms var(--ease);
+}
+.tpl-thumb:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+}
+
+.tpl-preview {
+  position: relative;
+  width: 100%;
+  /* Crops to the top of the message rather than fitting all of it. A whole
+     email scaled into a card is unreadable anyway, and most of one is white
+     space below the fold; the first inch is what identifies it. */
+  aspect-ratio: 1 / 0.72;
+  overflow: hidden;
+}
+.tpl-preview iframe {
+  border: 0;
+  display: block;
+  pointer-events: none;
+}
+.tpl-preview.empty {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 0.6;
+  background: var(--surface-sunk);
+}
+
+.tpl-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tpl-titles {
+  flex: 1;
+  min-width: 0;
+}
+.tpl-sub {
+  margin-top: -4px;
+}
+.tpl-when {
+  color: var(--ink-3);
+}
+
+/* ----------------------------------------------------- template editor --- */
+
+/* Full bleed: a code pane and a preview both want every pixel, and the page
+   padding that suits a table wastes a third of the width here. */
+.tpl-editor {
+  margin: -28px -24px -56px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 52px);
+  min-height: 0;
+}
+
+.tpl-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.tpl-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}
+.tpl-crumbs a {
+  color: var(--ink-3);
+  text-decoration: none;
+}
+.tpl-crumbs a:hover {
+  color: var(--ink);
+}
+.tpl-crumb-sep {
+  color: var(--ink-3);
+}
+
+.tpl-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+.tpl-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--line);
+}
+.tpl-pane.preview {
+  border-right: none;
+  background: var(--surface-sunk);
+}
+
+/* Both panes get the same header height, so the code and the preview start on
+   the same line and end on the same line. */
+.tpl-pane-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 46px;
+  padding: 0 10px 0 14px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.tpl-tab {
+  height: var(--control-h-sm);
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+.tpl-tab:hover {
+  background: var(--surface-sunk);
+  border-color: transparent;
+}
+.tpl-tab.on {
+  background: var(--surface-sunk);
+  color: var(--ink);
+}
+
+.tpl-plain {
+  flex: 1;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+}
+.tpl-plain:focus {
+  outline: none;
+}
+
+/* The envelope: what a recipient sees before opening. Sized to the same 46px
+   as the code pane's header plus its own subject row, so the two panes stay in
+   step. */
+.tpl-envelope {
+  flex: none;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: 0 18px;
+  display: grid;
+}
+/* Each header is its own row with a hairline under it, the way a mail client
+   stacks them. */
+.tpl-env-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 46px;
+  border-bottom: 1px solid var(--line);
+}
+.tpl-env-value {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+}
+.tpl-env-value:focus {
+  outline: none;
+}
+.tpl-env-value.bad {
+  color: var(--bad-ink);
+}
+/* Reveals Reply-To. Reads as a label, not a control, until hovered. */
+.tpl-env-add {
+  height: 26px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  flex: none;
+}
+.tpl-env-add:hover {
+  background: var(--surface-sunk);
+  border-color: transparent;
+  color: var(--ink);
+}
+.tpl-env-warn {
+  color: var(--bad-ink);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.tpl-env-label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  /* Wide enough for Reply-To on one line; wrapping a header label reads as a
+     broken layout rather than a long word. */
+  width: 64px;
+  flex: none;
+  white-space: nowrap;
+}
+/* Reads as the subject, because it is the subject. No box and no focus ring:
+   a border here would draw a form field around the one line of the preview
+   that is supposed to look like a real message. */
+.tpl-env-subject {
+  height: 46px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  flex: 1;
+  min-width: 0;
+}
+.tpl-env-subject:focus {
+  outline: none;
+}
+
+.tpl-frame {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: #fff;
+  display: block;
+}
+
+/* Inline edits in the header bar. */
+.tpl-name {
+  height: 26px;
+  width: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--ink);
+}
+.tpl-name:focus {
+  outline: none;
+}
+.tpl-slug {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+input.tpl-slug {
+  height: 26px;
+  width: auto;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  background: transparent;
+}
+.tpl-error {
+  margin: 10px 16px 0;
+}
+
+/* Confirmation over everything, centred, above the sheet layer. */
+/* Its own class, not .scrim: that one is Sheet's backdrop, and redefining it
+   here put a full-screen layer above every sheet in the app and swallowed all
+   their clicks. */
+.confirm-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, #000 46%, transparent);
+  animation: fade 140ms var(--ease) both;
+}
+.confirm {
+  width: min(420px, 100%);
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  animation: rise 200ms var(--ease) both;
+}
+.confirm h2 {
+  margin-bottom: 6px;
+}
+
+/* ---------------------------------------------------------- code editor --- */
+
+/* The textarea and the painted copy must lay text out identically or the caret
+   drifts from the glyphs. Every property that affects layout is set once here
+   and inherited by both. */
+.code {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  tab-size: 2;
+}
+.code-gutter {
+  overflow: hidden;
+  padding: 12px 10px 12px 14px;
+  text-align: right;
+  color: var(--ink-3);
+  background: var(--surface-sunk);
+  border-right: 1px solid var(--line);
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+.code-scroll {
+  position: relative;
+  min-width: 0;
+}
+.code-paint,
+.code-input {
+  margin: 0;
+  padding: 12px 16px;
+  border: 0;
+  font: inherit;
+  line-height: inherit;
+  tab-size: inherit;
+  white-space: pre;
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+}
+.code-paint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--ink);
+}
+.code-input {
+  position: relative;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--ink);
+  resize: none;
+  border-radius: 0;
+}
+.code-input:focus {
+  outline: none;
+}
+.code-input::placeholder {
+  color: var(--ink-3);
+}
+.code-input::selection {
+  background: color-mix(in srgb, var(--info-ink) 28%, transparent);
+}
+
+.tok-tag { color: var(--info-ink); }
+.tok-attr { color: var(--ok-ink); }
+.tok-string { color: var(--ink-2); }
+.tok-punct { color: var(--ink-3); }
+.tok-comment { color: var(--ink-3); font-style: italic; }
+.tok-var { color: var(--warn-ink); font-weight: 550; }
+
+/* An anchor that has to look and size like a button. */
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--control-h);
+  padding: 0 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+a.btn:hover {
+  background: var(--surface-sunk);
+  border-color: var(--ink-3);
+}
+a.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+a.btn.primary:hover {
+  background: var(--ink-2);
+  border-color: var(--ink-2);
+}
+a.btn.sm {
+  height: var(--control-h-sm);
+  padding: 0 9px;
+  font-size: 12px;
+}
+.navmenu-item.danger {
+  color: var(--bad-ink);
+}
+.navmenu-item.danger:hover {
+  background: var(--bad-bg);
+}
+
+@media (max-width: 900px) {
+  .tpl-split {
+    grid-template-columns: 1fr;
+  }
+  .tpl-editor {
+    height: auto;
+  }
+  .tpl-pane {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .code {
+    min-height: 420px;
+  }
+}
+
+/* --------------------------------------------------------- address picker --- */
+
+.picker {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.picker-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -8px;
+  z-index: var(--z-menu);
+  min-width: 280px;
+  max-width: 380px;
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  animation: rise 140ms var(--ease) both;
+}
+.picker-head {
+  padding: 6px 9px 7px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.picker-item {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 7px 9px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  text-align: left;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.picker-item.on {
+  background: var(--surface-sunk);
+  color: var(--ink);
+}
+
+/* The subject is a labelled row like the others now, so it drops the oversized
+   heading treatment that made it read as a title rather than a field. */
+.tpl-env-row.subject {
+  border-bottom: none;
+}
+
+/* ------------------------------------------------- template menu + panels --- */
+
+.navmenu-panel.wide {
+  min-width: 246px;
+}
+/* Anchored to the trigger's right edge, for a menu near the window edge. */
+.navmenu-panel.right {
+  left: auto;
+  right: 0;
+}
+.navmenu-label {
+  flex: 1;
+}
+/* A quiet second column: what the row will do, or how much of it there is. */
+.navmenu-note {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  flex: none;
+}
+.navmenu-sep {
+  height: 1px;
+  margin: 5px 8px;
+  background: var(--line);
+}
+
+.versions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.versions li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.versions li:last-child {
+  border-bottom: none;
+}
+.versions-when {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.versions-what {
+  grid-column: 1;
+}
+.versions li > button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+/* ------------------------------------------------------- paging + panels --- */
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+}
+.pager .grow {
+  flex: 1;
+}
+
+/* A list beside a fixed-height neighbour. Capped so the pair stays balanced,
+   and scrolled rather than truncated so nothing becomes unreachable. */
+.panel-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* Timestamps must not break across lines: the meridiem wrapping alone made
+   every row in a table a different height. */
+td.num,
+th.num {
+  white-space: nowrap;
+}
+
+/* Domain heading inside the mailbox picker. A tenant with three domains is a
+   wall of near-identical addresses otherwise, and the domain is the part that
+   tells them apart. */
+.picker-group {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* The overflow count in a table cell. Set apart from the addresses beside it so
+   it reads as a summary rather than as another address in the list. */
+.more {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  /* Both of these flip with the theme, unlike a hardcoded translucent white,
+     which all but vanishes against the light surface. */
+  background: var(--surface-sunk);
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 11px;
+  white-space: nowrap;
+}
