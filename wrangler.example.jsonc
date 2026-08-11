@@ -1,0 +1,64 @@
+/**
+ * Copy to wrangler.jsonc and fill in the ids, or run `npm run setup` to create
+ * the resources and write this file for you.
+ *
+ * wrangler.jsonc is gitignored on purpose: it holds account and zone ids that
+ * are specific to your deployment.
+ */
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mittova",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "<YOUR_CLOUDFLARE_ACCOUNT_ID>",
+
+  "observability": { "enabled": true },
+
+  // Single hostname for the mail UI — no workers.dev/preview alias.
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "mail.<YOUR_DOMAIN>", "custom_domain": true }],
+
+  // Nightly backup of D1 and message metadata into R2.
+  // Nightly backup, and a health check every six hours. The handler tells them
+  // apart by cron.
+  "triggers": { "crons": ["17 3 * * *", "23 */6 * * *"] },
+
+  // The SPA is served from the assets binding; anything under /api is handled
+  // by the Worker itself, otherwise not_found_handling would swallow it.
+  "assets": {
+    "directory": "./dashboard/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mittova-mail",
+      "database_id": "<YOUR_D1_DATABASE_ID>",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Everything the app stores: message content under <domain>/, backups under
+  // _backups/.
+  "r2_buckets": [{ "binding": "STORAGE", "bucket_name": "mittova" }],
+
+  "kv_namespaces": [{ "binding": "SETTINGS", "id": "<YOUR_KV_NAMESPACE_ID>" }],
+
+  "send_email": [{ "name": "EMAIL" }],
+
+  "vars": {
+    "APP_NAME": "Mittova",
+    // Comma separated to serve more than one domain from one deployment.
+    "MAIL_DOMAIN": "<YOUR_DOMAIN>",
+    "WORKER_NAME": "mittova",
+    "ADMIN_EMAIL": "admin",
+    // Enables automatic Email Routing rule creation, together with the
+    // CF_API_TOKEN secret. Leave blank to manage routing rules by hand.
+    "CF_ZONE_ID": "<YOUR_ZONE_ID>"
+  }
+}

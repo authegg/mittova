@@ -1,0 +1,32 @@
+node_modules/
+dist/
+dashboard/dist/
+
+# Local secrets and generated config — never commit these.
+.dev.vars
+.dev.vars.*
+wrangler.jsonc
+worker-configuration.d.ts
+.wrangler/
+
+# Operator notes for a specific deployment.
+RUNBOOK.local.md
+
+.DS_Store
+*.log
+
+# Build artifacts
+*.tsbuildinfo
+
+# Agent tooling installed into this checkout — third-party content, not Mittova's
+# to redistribute, and not part of the project.
+.agents/
+.claude/*
+# ...except this project's own skills, which document how to work on it and
+# belong in the repo. Everything else under .claude/skills is a symlink into a
+# shared library: third-party content that must stay out of this history.
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/mittova/
+!.claude/skills/git-conventions/
+skills-lock.json

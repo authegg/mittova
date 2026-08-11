@@ -1,0 +1,51 @@
+{
+  "name": "mittova",
+  "version": "1.0.0",
+  "description": "Self-hosted email on Cloudflare Workers — your domain, your mailbox, your data.",
+  "license": "MIT",
+  "keywords": [
+    "email",
+    "cloudflare-workers",
+    "email-routing",
+    "self-hosted",
+    "d1",
+    "webmail"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/authegg/mittova.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix dashboard run build",
+    "dev": "wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "types": "wrangler types",
+    "db:generate": "drizzle-kit generate",
+    "db:apply:local": "wrangler d1 migrations apply mittova-mail --local",
+    "db:apply": "wrangler d1 migrations apply mittova-mail --remote",
+    "setup": "node scripts/setup.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "tsc --noEmit && npm --prefix dashboard run typecheck && vitest run",
+    "backup:restore": "node scripts/restore.mjs",
+    "test:worker": "vitest run --project worker"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.1",
+    "postal-mime": "^2.7.6"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.20.1",
+    "@cloudflare/workers-types": "^5.20260808.1",
+    "drizzle-kit": "^0.31.6",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.118.0"
+  }
+}
