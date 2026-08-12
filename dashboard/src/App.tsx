@@ -1,9 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, type Mailbox, type Me, type MessageFull, type SessionUser } from "./api";
+import {
+  api,
+  type DemoInfo,
+  type Mailbox,
+  type Me,
+  type MessageFull,
+  type SessionUser,
+} from "./api";
 import { useAsync, usePoll, useRoute, ToastProvider } from "./hooks";
 import Icon, { type IconName } from "./components/Icon";
 import { EmptyState } from "./components/ui";
 import Login from "./components/Login";
+import DemoBanner from "./components/DemoBanner";
 import ChangePassword from "./components/ChangePassword";
 import AcceptInvite from "./components/AcceptInvite";
 import Profile from "./components/Profile";
@@ -71,6 +79,7 @@ function Shell() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [domains, setDomains] = useState<string[]>([]);
   const [me, setMe] = useState<SessionUser | null>(null);
+  const [demo, setDemo] = useState<DemoInfo | null>(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [route, navigate] = useRoute();
@@ -83,6 +92,7 @@ function Shell() {
     setAuthed(m.authed);
     setDomains(m.domains);
     setMe(m.user);
+    setDemo(m.demo);
     if (m.user?.mustChangePassword) setShowChangePassword(true);
   }, []);
 
@@ -145,7 +155,7 @@ function Shell() {
         />
       );
     }
-    return <Login onAuthed={() => api.me().then(applySession)} />;
+    return <Login demo={demo} onAuthed={() => api.me().then(applySession)} />;
   }
 
   return (
@@ -153,6 +163,8 @@ function Shell() {
       <a className="skip-link" href="#content">
         Skip to content
       </a>
+
+      {demo && <DemoBanner demo={demo} />}
 
       <header className="masthead">
         <div className="masthead-inner">
@@ -236,7 +248,7 @@ function Shell() {
           />
         )}
 
-        {isOwner && page === "domains" && <Domains />}
+        {isOwner && page === "domains" && <Domains isDemo={demo !== null} />}
         {isOwner && page === "users" && <Users mailboxes={mailboxes} />}
         {isOwner && page === "keys" && <ApiKeys mailboxes={mailboxes} />}
         {isOwner && page === "webhooks" && <Webhooks />}

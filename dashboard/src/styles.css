@@ -2299,3 +2299,58 @@ th.num {
   font-size: 11px;
   white-space: nowrap;
 }
+
+/* ------------------------------------------------------------------ demo --
+   The standing notice on demo.mittova.com. Rendered only when /api/auth/me
+   reports a demo, so none of this can appear on a deployment holding real mail.
+
+   Above the masthead rather than inside it: the masthead is sticky, and a
+   banner that scrolled away would be read once and then forgotten by the time
+   the visitor wondered where their draft went. The warn palette is reused
+   rather than invented — this is the same register as the other "you should
+   know something" surfaces, and it already carries its own dark-mode values. */
+.demo-banner {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  border-bottom: 1px solid color-mix(in srgb, var(--warn-ink) 30%, transparent);
+  padding: 9px 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  justify-content: center;
+  text-align: center;
+}
+
+.demo-banner p {
+  margin: 0;
+}
+
+.demo-banner code,
+.demo-notice code {
+  font-family: var(--mono);
+  font-size: 0.94em;
+  padding: 1px 5px;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--warn-ink) 14%, transparent);
+}
+
+/* The same message on the sign-in screen, where a first-time visitor meets it
+   before they have anywhere to go. */
+.demo-notice {
+  border-left-color: var(--warn-ink);
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  border-color: transparent;
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.demo-notice p {
+  margin: 0;
+}
+
+.demo-notice p + p {
+  margin-top: 6px;
+}

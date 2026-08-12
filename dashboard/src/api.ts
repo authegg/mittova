@@ -58,12 +58,23 @@ export interface BackupObject {
   uploaded: string;
 }
 
+/**
+ * Set only by the public demo at demo.mittova.com. Null on every real
+ * deployment, which is what keeps the banner and the published password off
+ * anything that holds real mail.
+ */
+export interface DemoInfo {
+  /** The break-glass password, shown on the sign-in screen. Public by design. */
+  password: string;
+}
+
 export interface Me {
   authed: boolean;
   appName: string;
   domains: string[];
   user: SessionUser | null;
   routingAutomated: boolean;
+  demo: DemoInfo | null;
 }
 
 export interface User {

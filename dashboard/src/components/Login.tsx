@@ -1,11 +1,17 @@
 import { useState, type FormEvent } from "react";
-import { api } from "../api";
+import { api, type DemoInfo } from "../api";
 import Icon from "./Icon";
 
-export default function Login({ onAuthed }: { onAuthed: () => void }) {
+export default function Login({ demo, onAuthed }: { demo: DemoInfo | null; onAuthed: () => void }) {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [adminMode, setAdminMode] = useState(false);
+  const [password, setPassword] = useState(demo?.password ?? "");
+  /**
+   * The demo opens straight into administrator mode with the password filled
+   * in. Its seeded users cannot be signed into at all — their password hashes
+   * are placeholders matching no credential — so presenting an email field
+   * first would offer a visitor nothing but a form that always refuses.
+   */
+  const [adminMode, setAdminMode] = useState(demo !== null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -30,6 +36,19 @@ export default function Login({ onAuthed }: { onAuthed: () => void }) {
           Mittova
         </div>
         <p className="lede">Your domain, your mailbox, your data.</p>
+
+        {demo && (
+          <div className="notice demo-notice">
+            <p>
+              <strong>Live demo.</strong> Resets hourly, sending is disabled, and all the data is
+              fabricated.
+            </p>
+            <p>
+              The password is <code>{demo.password || "published on mittova.com"}</code> and the
+              email field stays empty.
+            </p>
+          </div>
+        )}
 
         <form className="card" onSubmit={submit}>
           <div className="card-body stack">
