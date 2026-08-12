@@ -957,18 +957,37 @@ api.get("/stats", async (c) => {
     filled.push({ day, inbound: Number(row?.inbound ?? 0), outbound: Number(row?.outbound ?? 0) });
   }
 
+  /**
+   * The same tenant rule `orgFilter` applies, expressed for a raw subquery.
+   *
+   * These seven were counted across every tenant: the message stats above are
+   * scoped by `permission`, and the counts beside them were not, so an owner's
+   * "contacts" tile moved when an unrelated client added a contact. No row
+   * content escaped, but the totals did, and this is the same shape as the
+   * cross-tenant owner count this project has already had once.
+   *
+   * Fails closed identically: an org scopes to itself, a platform administrator
+   * with no org selected sees across all of them, and anyone else matches
+   * nothing rather than everything.
+   */
+  const tenant = scope.orgId
+    ? sql`where org_id = ${scope.orgId}`
+    : scope.isPlatformAdmin
+      ? sql``
+      : sql`where 1 = 0`;
+
   const counts =
     scope.role === "owner"
       ? (
           await db
             .select({
-              mailboxes: sql<number>`(select count(*) from mailboxes)`,
-              keys: sql<number>`(select count(*) from api_keys)`,
-              hooks: sql<number>`(select count(*) from webhooks)`,
-              templates: sql<number>`(select count(*) from templates)`,
-              contacts: sql<number>`(select count(*) from contacts)`,
-              suppressions: sql<number>`(select count(*) from suppressions)`,
-              users: sql<number>`(select count(*) from users)`,
+              mailboxes: sql<number>`(select count(*) from mailboxes ${tenant})`,
+              keys: sql<number>`(select count(*) from api_keys ${tenant})`,
+              hooks: sql<number>`(select count(*) from webhooks ${tenant})`,
+              templates: sql<number>`(select count(*) from templates ${tenant})`,
+              contacts: sql<number>`(select count(*) from contacts ${tenant})`,
+              suppressions: sql<number>`(select count(*) from suppressions ${tenant})`,
+              users: sql<number>`(select count(*) from users ${tenant})`,
             })
             .from(sql`(select 1)`)
             .all()

@@ -115,6 +115,45 @@ describe("tenant isolation", () => {
     }
   });
 
+  it("counts only its own rows on the overview stats", async () => {
+    /*
+     * The message stats on this endpoint were scoped and the seven `count(*)`
+     * tiles beside them were not, so an owner's totals moved when an unrelated
+     * tenant added a row. No content escaped, but the numbers did — the same
+     * shape as the cross-tenant owner count this project has had before.
+     *
+     * Driven from a real non-platform owner session, because a platform
+     * administrator is legitimately allowed to see across tenants and would
+     * make this pass either way.
+     */
+    const admin = await signIn(undefined, "test-admin-password");
+
+    // Assert the positive first: alpha's own row is counted at all. A test that
+    // only checks "beta's rows are absent" also passes when nothing is counted.
+    for (const [org, email] of [
+      ["org_alpha", "ours@alpha.test"],
+      ["org_beta", "theirs@beta.test"],
+    ] as const) {
+      const res = await call(
+        "/api/contacts",
+        { method: "POST", body: json({ email, name: email }), headers: { "x-mittova-org": org } },
+        admin,
+      );
+      expect(res.status, `create contact in ${org}`).toBe(201);
+    }
+
+    const stats = await (
+      await call("/api/stats", {}, alpha)
+    ).json<{
+      counts: { contacts: number; templates: number; mailboxes: number; users: number };
+    }>();
+
+    expect(stats.counts.contacts, "should count alpha's contact and not beta's").toBe(1);
+    expect(stats.counts.templates, "one template per tenant in the seed").toBe(1);
+    expect(stats.counts.mailboxes, "one mailbox per tenant in the seed").toBe(1);
+    expect(stats.counts.users, "only alpha's owner").toBe(1);
+  });
+
   it("cannot read, edit, duplicate or delete another tenant's template", async () => {
     const id = "tpl_org_beta";
     expect((await call(`/api/templates/${id}`, {}, alpha)).status).toBe(404);
