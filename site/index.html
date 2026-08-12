@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fbfbfa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)" />
+
+    <title>Mittova — self-hosted email on Cloudflare Workers</title>
+    <meta
+      name="description"
+      content="A real mailbox on your own domain: inbox, composer and send API on Cloudflare Workers. No server to run, no mail stack to maintain. MIT licensed."
+    />
+
+    <!-- Both mittova.com and www.mittova.com serve this page. The apex is the
+         canonical one, so the two hostnames are not indexed as duplicates. -->
+    <link rel="canonical" href="https://mittova.com/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mittova.com/" />
+    <meta property="og:title" content="Mittova — self-hosted email on Cloudflare Workers" />
+    <meta
+      property="og:description"
+      content="A real mailbox on your own domain: inbox, composer and send API on Cloudflare Workers. No server to run, no mail stack to maintain. MIT licensed."
+    />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/authegg/mittova/main/assets/social-preview.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a09b93' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 18.6V6.9l8 6.1 8-6.1v11.7'/%3E%3Cpath d='M2.9 18.6h18.2'/%3E%3C/svg%3E"
+    />
+
+    <link rel="stylesheet" href="/src/styles.css" />
+
+    <!-- Replaced at build time with the contents of src/theme.js. It has to run
+         before the body renders, or a pinned dark page flashes light. -->
+    <script data-theme-script></script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="masthead">
+      <div class="masthead-inner">
+        <a class="wordmark" href="/">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 18.6V6.9l8 6.1 8-6.1v11.7" />
+            <path d="M2.9 18.6h18.2" />
+          </svg>
+          Mittova
+        </a>
+
+        <nav aria-label="Sections">
+          <a href="#screens">Screenshots</a>
+          <a href="#compare">Compare</a>
+          <a href="#cost">Cost</a>
+          <a href="#start">Get started</a>
+        </nav>
+
+        <!-- Cycles system / light / dark. Hidden until the theme script runs. -->
+        <button class="theme" type="button" aria-label="Colour theme">
+          <svg
+            class="i-auto"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="8.2" />
+            <path d="M12 3.8a8.2 8.2 0 0 1 0 16.4z" fill="currentColor" stroke="none" />
+          </svg>
+          <svg
+            class="i-light"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="4.2" />
+            <path
+              d="M12 2.4v2.2M12 19.4v2.2M4.2 12H2M22 12h-2.2M6.5 6.5 4.9 4.9M19.1 19.1l-1.6-1.6M17.5 6.5l1.6-1.6M4.9 19.1l1.6-1.6"
+            />
+          </svg>
+          <svg
+            class="i-dark"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8a8.6 8.6 0 1 0 10.8 10.8z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ===================================================== what it is -->
+      <section class="hero" id="what">
+        <div class="wrap">
+          <span class="eyebrow">Open source · MIT licensed</span>
+          <h1>A real mailbox on your own domain</h1>
+
+          <p class="lede">
+            Self-hosted email on Cloudflare Workers: mailboxes you can read and reply in, a send
+            API, and organizations so one deployment can serve several clients. Your account, your
+            data.
+          </p>
+
+          <div class="cta">
+            <a class="btn primary" href="https://demo.mittova.com">
+              Open the live demo
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14 4h6v6M20 4l-8.5 8.5" />
+                <path d="M18 14.5V20H4V6h5.5" />
+              </svg>
+            </a>
+            <a class="btn" href="https://github.com/authegg/mittova">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M12 .6a11.4 11.4 0 0 0-3.6 22.2c.57.1.78-.25.78-.55v-2c-3.17.69-3.84-1.53-3.84-1.53-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.09 1.75 1.18 1.75 1.18 1.02 1.75 2.68 1.24 3.33.95.1-.74.4-1.24.72-1.53-2.53-.29-5.19-1.27-5.19-5.63 0-1.25.44-2.27 1.17-3.07-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.14 1.17a10.9 10.9 0 0 1 5.72 0c2.18-1.48 3.14-1.17 3.14-1.17.62 1.57.23 2.73.11 3.02.73.8 1.17 1.82 1.17 3.07 0 4.37-2.67 5.33-5.21 5.62.41.35.78 1.05.78 2.12v3.14c0 .3.2.66.79.55A11.4 11.4 0 0 0 12 .6z"
+                />
+              </svg>
+              Read the source
+            </a>
+          </div>
+
+          <!-- The honest caveat. Above the fold at every width, in the reading
+               order between the calls to action and the first screenshot. -->
+          <p class="caveat">
+            <b>Cloudflare Email Sending is in beta.</b>
+            Receiving through Email Routing is generally available; sending depends on a beta
+            product, so treat it accordingly before putting a business on it.
+          </p>
+
+          <figure class="hero-shot">
+            <div class="shot">
+              <picture
+                data-shot="inbox"
+                data-alt="The Mittova inbox, listing received mail across three mailboxes with SPF, DKIM and DMARC results on each message"
+                data-eager
+              ></picture>
+            </div>
+          </figure>
+
+          <dl class="caps">
+            <div class="cap">
+              <dt>Receive, read, reply</dt>
+              <dd>
+                Inbound mail lands in a Worker, is parsed into D1 and R2, and threads correctly on
+                the way back out.
+              </dd>
+            </div>
+            <div class="cap">
+              <dt>Send from your own domain</dt>
+              <dd>
+                Outbound mail leaves DKIM-signed by your domain, with live SPF, DKIM and DMARC
+                checks and per-mailbox caps.
+              </dd>
+            </div>
+            <div class="cap">
+              <dt>A developer API</dt>
+              <dd>
+                Bearer-token <code>POST /api/v1/emails</code>, reusable templates, and HMAC-signed
+                webhooks.
+              </dd>
+            </div>
+            <div class="cap">
+              <dt>Shared inboxes</dt>
+              <dd>
+                Several people on one address, with per-user read state and assignment rather than a
+                shared password.
+              </dd>
+            </div>
+            <div class="cap">
+              <dt>Organizations</dt>
+              <dd>
+                One deployment serves several unrelated clients, each seeing only its own domains,
+                mailboxes, people and keys.
+              </dd>
+            </div>
+            <div class="cap">
+              <dt>Search that works</dt>
+              <dd>
+                Full-text search over every message via SQLite FTS5, across as many domains as you
+                add.
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <!-- ================================================ what it looks like -->
+      <section id="screens">
+        <div class="wrap">
+          <span class="eyebrow">What it looks like</span>
+          <h2>The dashboard is the product</h2>
+          <div class="prose" style="margin-top: 18px">
+            <p>
+              Everything below is the real interface, filled from
+              <code>npm run seed:demo</code> — two organizations, three mailboxes and some mail, all
+              fabricated under <code>.example</code>. The same data is running at the live demo.
+            </p>
+          </div>
+
+          <div class="gallery">
+            <figure>
+              <div class="shot">
+                <picture
+                  data-shot="message"
+                  data-alt="A message open in the reading pane, showing From, To, Date, Size and Message-ID, SPF DKIM and DMARC all passing, and the formatted body"
+                ></picture>
+              </div>
+              <figcaption>
+                Reading a message. Authentication results are shown per message, the raw source and
+                headers are one click away, and remote HTML renders in a sandboxed iframe so it
+                cannot script the dashboard.
+              </figcaption>
+            </figure>
+
+            <figure>
+              <div class="shot">
+                <picture
+                  data-shot="users"
+                  data-alt="The users table listing owners and members with the mailboxes each can see and when they last signed in"
+                ></picture>
+              </div>
+              <figcaption>
+                Users and roles. Members see only the mailboxes assigned to them; owners manage
+                their organization; a platform administrator can act in any of them.
+              </figcaption>
+            </figure>
+
+            <figure>
+              <div class="shot">
+                <picture
+                  data-shot="templates"
+                  data-alt="The template gallery, three templates with live previews and variable placeholders"
+                ></picture>
+              </div>
+              <figcaption>
+                Templates, reusable from the composer or by passing <code>template</code> to the
+                send API.
+              </figcaption>
+            </figure>
+
+            <figure>
+              <div class="shot">
+                <picture
+                  data-shot="keys"
+                  data-alt="The API keys table showing key previews, scope, the mailbox each is restricted to, and last use"
+                ></picture>
+              </div>
+              <figcaption>
+                API keys. Restricted keys may send as exactly one mailbox; only a SHA-256 hash is
+                stored, so the plaintext is shown once and never again.
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= comparison -->
+      <section id="compare">
+        <div class="wrap">
+          <span class="eyebrow">Why not a hosted API, or a mail server</span>
+          <h2>Mittova sits in a gap</h2>
+
+          <div class="prose" style="margin-top: 18px">
+            <p>
+              Hosted APIs send well but hold your mail and do not let you read it. Classic
+              self-hosted mail servers give you everything, and a server to defend. Email Routing on
+              its own forwards mail but stores nothing.
+            </p>
+          </div>
+
+          <!-- Rendered at build time from site/content/comparison.json, which is
+               also what generates the README's table. Neither is hand-written. -->
+          <!--
+            tabindex and role are what make this scrollable region reachable
+            without a mouse. Below ~860px the table overflows and the page tells
+            you to scroll it sideways — an instruction a keyboard-only visitor
+            could not follow, because a plain overflow container takes no focus.
+            With these, the two right-hand columns are reachable by Tab then
+            arrow keys, and a screen reader announces the region by name.
+          -->
+          <div
+            class="cmp-scroll"
+            tabindex="0"
+            role="region"
+            aria-label="How Mittova compares, scrollable table"
+          >
+            <div data-comparison></div>
+          </div>
+          <p class="cmp-hint">Scroll the table sideways to see every column.</p>
+
+          <div class="prose" style="margin-top: 32px">
+            <p>
+              The trade is deliberate: you are choosing to depend on Cloudflare rather than on a
+              vendor or on a server. If that dependency is unacceptable, a classic mail server is
+              the honest answer.
+            </p>
+            <p>
+              Three more things worth knowing before you pick.
+              <strong>Mittova is for transactional mail only</strong> — Cloudflare Email Service is
+              not for bulk or marketing sending, and Mittova deliberately has no broadcast feature.
+              <strong>An organization is not a separate database</strong> — isolation is enforced in
+              the query layer against one D1 instance, so clients who need their data physically
+              separate want separate deployments. And
+              <strong>your domain must use Cloudflare DNS</strong>, because Email Routing and Email
+              Sending both depend on it.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================= cost -->
+      <section id="cost">
+        <div class="wrap">
+          <span class="eyebrow">What it costs</span>
+          <h2>Nothing to Mittova. Something to Cloudflare.</h2>
+
+          <div class="prose" style="margin-top: 18px">
+            <p>
+              Mittova has no price. It is MIT licensed and you run it yourself, so there is no seat
+              fee, no per-message fee and nobody to invoice you. What you pay for is the Cloudflare
+              account it runs in.
+            </p>
+            <p>
+              <strong>Be careful with the word free.</strong> Receiving genuinely is free — Email
+              Routing costs nothing on any plan and inbound mail is unmetered. Sending is not.
+              Cloudflare Email Service will only send to arbitrary recipients on the
+              <strong>Workers Paid plan</strong>, which starts at $5 per month; that is a minimum
+              charge with usage metered on top, not a flat rate. Sending only to destination
+              addresses you have verified in your own account stays free on any plan, which is
+              enough to try Mittova but not enough to run a business on it.
+            </p>
+          </div>
+
+          <ul class="points" style="margin-top: 30px">
+            <li>
+              <strong>Workers</strong> — 100,000 requests a day on the free plan. The paid plan is a
+              $5 monthly minimum including 10 million requests, then $0.30 per additional million —
+              and separately 30 million CPU milliseconds, then $0.02 per additional million.
+              Requests are only half the meter, so a slow handler costs money that a request count
+              alone will not show you. There is no charge for egress or bandwidth. That $5 covers
+              Workers and Workers KV; D1 and R2 are metered on top of it.
+            </li>
+            <li>
+              <strong>D1</strong> — free allowance of 5 million rows read and 100,000 rows written a
+              day, and 5 GB of storage. Message metadata and the search index live here.
+            </li>
+            <li>
+              <strong>R2</strong> — free allowance of 10 GB-month of standard storage, 1 million
+              Class A and 10 million Class B operations a month. Raw MIME and attachments live here.
+              Egress is not charged; operations still are.
+            </li>
+            <li>
+              <strong>KV</strong> — free allowance of 100,000 reads a day but only
+              <strong>1,000 writes</strong>, with 1 GB of storage. Sessions and rate-limit counters
+              live here, so on a free plan this is usually the first ceiling you meet, ahead of
+              anything to do with mail volume.
+            </li>
+            <li>
+              <strong>Email Sending</strong> — 3,000 outbound messages a month are included, then
+              $0.35 per thousand. Inbound is unlimited. New accounts start with a conservative daily
+              cap that scales with your sending behaviour and deliverability; Cloudflare does not
+              publish the schedule for that, so plan for a ramp rather than a number.
+            </li>
+          </ul>
+
+          <div class="prose" style="margin-top: 30px">
+            <p>
+              A small deployment — one domain, a few mailboxes, transactional volume — is a $5
+              Cloudflare subscription and very little metered usage on top. It is not zero, and a
+              page that told you it was would be lying to you.
+            </p>
+            <p class="fineprint">
+              Figures checked against Cloudflare's own pricing pages on 12 August 2026. They are
+              Cloudflare's to change, so treat these as the shape of the bill rather than a quote:
+              <a href="https://developers.cloudflare.com/workers/platform/pricing/">Workers</a>,
+              <a href="https://developers.cloudflare.com/d1/platform/pricing/">D1</a>,
+              <a href="https://developers.cloudflare.com/r2/pricing/">R2</a>,
+              <a href="https://developers.cloudflare.com/kv/platform/pricing/">KV</a> and
+              <a href="https://developers.cloudflare.com/email-service/platform/pricing/"
+                >Email Service</a
+              >.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ start -->
+      <section id="start">
+        <div class="wrap">
+          <span class="eyebrow">How to start</span>
+          <h2>Clone it, point it at a domain, deploy</h2>
+
+          <div class="prose" style="margin-top: 18px">
+            <p>
+              You need a domain using Cloudflare DNS, a Cloudflare account with Workers, D1, R2 and
+              KV available, and Node.js 20 or newer.
+            </p>
+          </div>
+
+          <div class="steps">
+            <div class="step">
+              <h3>Clone and install</h3>
+              <pre><code>git clone https://github.com/authegg/mittova.git
+cd mittova
+npm install &amp;&amp; npm --prefix dashboard install</code></pre>
+            </div>
+
+            <div class="step">
+              <h3>Create the resources and deploy</h3>
+              <pre><code>npx wrangler login
+npm run setup      <span class="c"># creates D1 + R2 + KV, writes wrangler.jsonc,</span>
+                   <span class="c"># and sets the admin password</span>
+npm run deploy</code></pre>
+              <p>
+                <code>npm run setup</code> prints the admin password once. It is not recoverable
+                afterwards.
+              </p>
+            </div>
+
+            <div class="step">
+              <h3>Enable Email Routing by hand</h3>
+              <p>
+                This step cannot be automated, and it is worth knowing before you start.
+                <code>POST /zones/{zone}/email/routing/enable</code> returns 403 even for a token
+                carrying every Email Routing permission group, so you have to turn Email Routing and
+                Email Sending on for the domain yourself, in the Cloudflare dashboard under
+                <strong>Compute → Email Service</strong>. Mittova links you to the right page and
+                detects when you have done it.
+              </p>
+              <p>
+                Everything else it can do for itself: given a zone id and a
+                <code>CF_API_TOKEN</code> scoped to two policies, it onboards Email Sending — with
+                Cloudflare writing the <code>cf-bounce</code> MX, SPF, DKIM and DMARC records, so
+                the token never needs DNS edit permission — and creates the routing rule for each
+                mailbox.
+              </p>
+            </div>
+
+            <div class="step">
+              <h3>Sign in</h3>
+              <p>
+                Open <code>https://mail.yourdomain.com</code>, leave the email field empty, and use
+                the password from step two. Further domains are added from the dashboard, no
+                redeploy.
+              </p>
+            </div>
+          </div>
+
+          <div class="cta stack" style="margin-top: 40px">
+            <a class="btn primary" href="https://github.com/authegg/mittova">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M12 .6a11.4 11.4 0 0 0-3.6 22.2c.57.1.78-.25.78-.55v-2c-3.17.69-3.84-1.53-3.84-1.53-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.09 1.75 1.18 1.75 1.18 1.02 1.75 2.68 1.24 3.33.95.1-.74.4-1.24.72-1.53-2.53-.29-5.19-1.27-5.19-5.63 0-1.25.44-2.27 1.17-3.07-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.14 1.17a10.9 10.9 0 0 1 5.72 0c2.18-1.48 3.14-1.17 3.14-1.17.62 1.57.23 2.73.11 3.02.73.8 1.17 1.82 1.17 3.07 0 4.37-2.67 5.33-5.21 5.62.41.35.78 1.05.78 2.12v3.14c0 .3.2.66.79.55A11.4 11.4 0 0 0 12 .6z"
+                />
+              </svg>
+              github.com/authegg/mittova
+            </a>
+            <a class="btn" href="https://demo.mittova.com">Open the live demo</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap footer-inner">
+        <p>MIT licensed. Built on Cloudflare Workers, D1, R2 and KV.</p>
+        <nav aria-label="Elsewhere">
+          <a href="https://github.com/authegg/mittova">Source</a>
+          <a href="https://demo.mittova.com">Live demo</a>
+          <a href="https://github.com/authegg/mittova/blob/main/SECURITY.md">Security</a>
+          <a href="https://github.com/authegg/mittova/blob/main/CONTRIBUTING.md">Contributing</a>
+          <a href="https://github.com/authegg/mittova/blob/main/LICENSE">Licence</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

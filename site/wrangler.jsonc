@@ -1,0 +1,44 @@
+/**
+ * mittova.com — the landing page.
+ *
+ * Unlike the Worker's own wrangler.jsonc and the demo's, this file IS committed,
+ * and it is safe to commit because it holds nothing deployment-specific: there
+ * is no account id (Cloudflare Workers Builds supplies that from the connection
+ * itself), no zone id (a `custom_domain` route resolves its zone from the
+ * hostname), and no D1, R2 or KV ids, because a static site has no bindings at
+ * all. That is exactly why the site can deploy automatically and the demo
+ * cannot.
+ *
+ * Deployment is Workers Builds, connected to github.com/authegg/mittova from the
+ * Cloudflare dashboard and building from the `site/` subdirectory on every push
+ * to main. There is deliberately no GitHub Actions workflow holding a Cloudflare
+ * token: this repository is public, and the connection is revocable from
+ * Cloudflare in one click, which a copied credential is not.
+ *
+ * Because whatever lands on main is deployed, no Dependabot ecosystem in this
+ * repository is auto-merged. Auto-deploy plus auto-merge would mean an
+ * unreviewed dependency bump shipping to mittova.com on its own.
+ *
+ * There is no "main" entry: this Worker is nothing but its static assets.
+ */
+{
+  "name": "mittova-site",
+  "compatibility_date": "2026-07-01",
+
+  "observability": { "enabled": true },
+
+  // No workers.dev alias and no preview URLs: one canonical address for the
+  // page, so there is no second hostname serving the same content.
+  "workers_dev": false,
+  "preview_urls": false,
+
+  // Both hostnames serve the page. The apex is canonical — index.html carries a
+  // rel="canonical" pointing at it — so www is a convenience rather than a
+  // second copy as far as a search engine is concerned.
+  "routes": [
+    { "pattern": "mittova.com", "custom_domain": true },
+    { "pattern": "www.mittova.com", "custom_domain": true }
+  ],
+
+  "assets": { "directory": "./dist" }
+}
