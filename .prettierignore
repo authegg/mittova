@@ -1,0 +1,18 @@
+# Generated or vendored — not ours to format.
+node_modules/
+dist/
+dashboard/dist/
+package-lock.json
+dashboard/package-lock.json
+worker-configuration.d.ts
+migrations/
+
+# Hand-tuned prose and config where formatting would fight the author:
+# the README carries HTML blocks and an aligned comparison table, the issue
+# forms and workflow rely on their own block layout, and the example wrangler
+# config is commented line by line.
+*.md
+.github/
+*.jsonc
+
+.github/assets/

@@ -60,7 +60,10 @@ function ActivityChart({ series }: { series: Day[] }) {
                   />
                 )}
                 {d.inbound > 0 && (
-                  <div className="chart-bar in" style={{ height: `${(d.inbound / peak) * 100}%` }} />
+                  <div
+                    className="chart-bar in"
+                    style={{ height: `${(d.inbound / peak) * 100}%` }}
+                  />
                 )}
                 {total === 0 && (
                   <div className="chart-bar out" style={{ height: 2, opacity: 0.45 }} />
@@ -96,7 +99,11 @@ function ActivityChart({ series }: { series: Day[] }) {
         <div className="chart-stat">
           <dt>In / out</dt>
           <dd>
-            {totalIn} <span className="muted" style={{ fontWeight: 400 }}>/</span> {totalOut}
+            {totalIn}{" "}
+            <span className="muted" style={{ fontWeight: 400 }}>
+              /
+            </span>{" "}
+            {totalOut}
           </dd>
         </div>
       </dl>
@@ -112,7 +119,15 @@ function MailboxList({
 }: {
   navigate: (to: string) => void;
   loading: boolean;
-  boxes: { id: string; address: string; unread: number; received: number; sent: number; sent24h: number; dailySendLimit: number }[];
+  boxes: {
+    id: string;
+    address: string;
+    unread: number;
+    received: number;
+    sent: number;
+    sent24h: number;
+    dailySendLimit: number;
+  }[];
   canCreate: boolean;
 }) {
   if (loading) return <TableSkeleton rows={4} cols={2} />;
@@ -301,12 +316,12 @@ export default function Overview({
               times the chart's height, leaving the chart stranded in white
               space at the top. */}
           <div className="panel-scroll">
-          <MailboxList
-            navigate={navigate}
-            loading={boxes.loading}
-            boxes={boxes.data ?? []}
-            canCreate={isOwner}
-          />
+            <MailboxList
+              navigate={navigate}
+              loading={boxes.loading}
+              boxes={boxes.data ?? []}
+              canCreate={isOwner}
+            />
           </div>
         </Card>
       </div>
@@ -329,26 +344,28 @@ export default function Overview({
             <div className="table-wrap">
               <table>
                 <tbody>
-                  {statuses.flatMap((d) => d.records).map((r) => (
-                    <tr key={`${r.type}-${r.name}`}>
-                      <td style={{ width: 44 }}>
-                        <Icon
-                          name={r.status === "ok" ? "check" : "alert"}
-                          size={15}
-                          className={r.status === "ok" ? "" : "muted"}
-                        />
-                      </td>
-                      <td className="cell-strong">{r.purpose}</td>
-                      <td className="mono small muted truncate" style={{ width: 300 }}>
-                        {r.name}
-                      </td>
-                      <td style={{ width: 96 }}>
-                        <span className={`badge ${r.status === "ok" ? "ok" : "bad"}`}>
-                          {r.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {statuses
+                    .flatMap((d) => d.records)
+                    .map((r) => (
+                      <tr key={`${r.type}-${r.name}`}>
+                        <td style={{ width: 44 }}>
+                          <Icon
+                            name={r.status === "ok" ? "check" : "alert"}
+                            size={15}
+                            className={r.status === "ok" ? "" : "muted"}
+                          />
+                        </td>
+                        <td className="cell-strong">{r.purpose}</td>
+                        <td className="mono small muted truncate" style={{ width: 300 }}>
+                          {r.name}
+                        </td>
+                        <td style={{ width: 96 }}>
+                          <span className={`badge ${r.status === "ok" ? "ok" : "bad"}`}>
+                            {r.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>

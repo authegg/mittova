@@ -141,7 +141,9 @@ writeFileSync(file, SQL);
 try {
   console.log(c.bold("Seeding the local database with demo content"));
   wrangler(["d1", "execute", DB, "--local", "--file", file]);
-  console.log(`  ${c.green("done")} — 2 organizations, 3 mailboxes, 4 users, 3 templates, 3 keys, 6 messages`);
+  console.log(
+    `  ${c.green("done")} — 2 organizations, 3 mailboxes, 4 users, 3 templates, 3 keys, 6 messages`,
+  );
   console.log(c.dim("  Run `npm run dev`, then sign in with the ADMIN_PASSWORD from .dev.vars"));
   console.log(c.dim("  and an empty email field.\n"));
 } catch (err) {

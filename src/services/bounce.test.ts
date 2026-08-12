@@ -46,7 +46,10 @@ describe("detectBounce", () => {
   });
 
   it("leaves ordinary mail alone", () => {
-    const r = detectBounce("customer@example.com", "From: customer@example.com\nSubject: Question\n\nWhen does it ship?");
+    const r = detectBounce(
+      "customer@example.com",
+      "From: customer@example.com\nSubject: Question\n\nWhen does it ship?",
+    );
     expect(r.isBounce).toBe(false);
     expect(r.recipients).toEqual([]);
   });

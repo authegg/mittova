@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { api, type Mailbox } from "../api";
 import { useToast } from "../hooks";
-import { Badge, Card, EmptyState, Sheet, absoluteTime, compactTime , Pager} from "../components/ui";
+import { Badge, Card, EmptyState, Sheet, absoluteTime, compactTime, Pager } from "../components/ui";
 import { usePaged } from "../hooks-paging";
 import Icon from "../components/Icon";
 
@@ -58,84 +58,87 @@ export default function Settings({
           />
         ) : (
           <>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ width: 250 }}>Address</th>
-                  <th style={{ width: 110 }}>Routing</th>
-                  <th style={{ width: 160 }}>24h usage</th>
-                  <th>Lifetime</th>
-                  <th style={{ width: 150 }} className="num">
-                    Created
-                  </th>
-                  <th style={{ width: 130 }} />
-                </tr>
-              </thead>
-              <tbody>
-                {paged.slice.map((m) => {
-                  const pct = Math.min(100, Math.round((m.sent24h / Math.max(1, m.dailySendLimit)) * 100));
-                  return (
-                    <tr key={m.id}>
-                      <td className="mono small cell-strong truncate">{m.address}</td>
-                      <td>
-                        {m.routed === null ? (
-                          <span className="small muted">unknown</span>
-                        ) : m.routed ? (
-                          <Badge tone="ok">receiving</Badge>
-                        ) : (
-                          <Badge tone="bad">no rule</Badge>
-                        )}
-                      </td>
-                      <td>
-                        <div className="small">
-                          {m.sent24h} / {m.dailySendLimit}
-                        </div>
-                        <div
-                          style={{
-                            height: 3,
-                            borderRadius: 2,
-                            background: "var(--line)",
-                            marginTop: 4,
-                            overflow: "hidden",
-                          }}
-                        >
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ width: 250 }}>Address</th>
+                    <th style={{ width: 110 }}>Routing</th>
+                    <th style={{ width: 160 }}>24h usage</th>
+                    <th>Lifetime</th>
+                    <th style={{ width: 150 }} className="num">
+                      Created
+                    </th>
+                    <th style={{ width: 130 }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {paged.slice.map((m) => {
+                    const pct = Math.min(
+                      100,
+                      Math.round((m.sent24h / Math.max(1, m.dailySendLimit)) * 100),
+                    );
+                    return (
+                      <tr key={m.id}>
+                        <td className="mono small cell-strong truncate">{m.address}</td>
+                        <td>
+                          {m.routed === null ? (
+                            <span className="small muted">unknown</span>
+                          ) : m.routed ? (
+                            <Badge tone="ok">receiving</Badge>
+                          ) : (
+                            <Badge tone="bad">no rule</Badge>
+                          )}
+                        </td>
+                        <td>
+                          <div className="small">
+                            {m.sent24h} / {m.dailySendLimit}
+                          </div>
                           <div
                             style={{
-                              width: `${pct}%`,
-                              height: "100%",
-                              background: pct >= 100 ? "var(--bad-ink)" : "var(--ink-3)",
+                              height: 3,
+                              borderRadius: 2,
+                              background: "var(--line)",
+                              marginTop: 4,
+                              overflow: "hidden",
                             }}
-                          />
-                        </div>
-                      </td>
-                      <td className="small muted">
-                        {m.received} received · {m.sent} sent
-                      </td>
-                      <td className="num small muted">{compactTime(m.createdAt)}</td>
-                      <td>
-                        <div className="row">
-                          <button className="sm" onClick={() => setEditing(m)}>
-                            Edit
-                          </button>
-                          <button className="danger sm" onClick={() => setDeleting(m)}>
-                            <Icon name="trash" size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <Pager
-            page={paged.page}
-            pageCount={paged.pageCount}
-            total={paged.total}
-            shown={paged.slice.length}
-            onPage={paged.setPage}
-          />
+                          >
+                            <div
+                              style={{
+                                width: `${pct}%`,
+                                height: "100%",
+                                background: pct >= 100 ? "var(--bad-ink)" : "var(--ink-3)",
+                              }}
+                            />
+                          </div>
+                        </td>
+                        <td className="small muted">
+                          {m.received} received · {m.sent} sent
+                        </td>
+                        <td className="num small muted">{compactTime(m.createdAt)}</td>
+                        <td>
+                          <div className="row">
+                            <button className="sm" onClick={() => setEditing(m)}>
+                              Edit
+                            </button>
+                            <button className="danger sm" onClick={() => setDeleting(m)}>
+                              <Icon name="trash" size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <Pager
+              page={paged.page}
+              pageCount={paged.pageCount}
+              total={paged.total}
+              shown={paged.slice.length}
+              onPage={paged.setPage}
+            />
           </>
         )}
       </Card>

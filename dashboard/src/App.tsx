@@ -87,7 +87,10 @@ function Shell() {
   }, []);
 
   useEffect(() => {
-    api.me().then(applySession).catch(() => setAuthed(false));
+    api
+      .me()
+      .then(applySession)
+      .catch(() => setAuthed(false));
   }, [applySession]);
 
   const boxes = useAsync(() => (authed ? api.mailboxes() : Promise.resolve([])), [authed]);
@@ -164,11 +167,7 @@ function Shell() {
           <div className="nav-wrap">
             <nav className="tabs" aria-label="Sections">
               {tabs.map((t) => (
-                <a
-                  key={t.id}
-                  href={`#/${t.id}`}
-                  aria-current={page === t.id ? "page" : undefined}
-                >
+                <a key={t.id} href={`#/${t.id}`} aria-current={page === t.id ? "page" : undefined}>
                   {t.label}
                   {t.id === "inbox" && unread > 0 && <span className="tab-count">{unread}</span>}
                 </a>

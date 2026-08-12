@@ -14,7 +14,6 @@ import { attachmentKey } from "./storage";
 import { resolveThreadId } from "../email/ingest";
 import { recordEvent, type WaitUntilCtx } from "./events";
 
-
 export class SendError extends Error {
   constructor(
     message: string,
@@ -202,10 +201,7 @@ export async function sendEmail(
   // mailbox's standing one, then the mailbox itself. Only the per-send value is
   // re-validated; the stored ones were checked when they were saved, and a bad
   // stored value must not be able to block sending.
-  const replyTo = resolveReplyTo(
-    input.replyTo,
-    tpl?.replyTo || mailbox.replyTo || mailbox.address,
-  );
+  const replyTo = resolveReplyTo(input.replyTo, tpl?.replyTo || mailbox.replyTo || mailbox.address);
 
   if (to.length + cc.length + bcc.length > 50) {
     throw new SendError("a message can address at most 50 recipients", 400);
@@ -332,8 +328,7 @@ export async function sendEmail(
       .trim();
   }
 
-  const finalSubject =
-    subject?.trim() || (original ? `Re: ${original.subject}` : "(no subject)");
+  const finalSubject = subject?.trim() || (original ? `Re: ${original.subject}` : "(no subject)");
 
   // Never trust submitted HTML, even from an authenticated session: this mail
   // goes out DKIM-signed by our domain.

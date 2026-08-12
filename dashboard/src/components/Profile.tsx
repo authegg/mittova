@@ -87,8 +87,8 @@ export default function Profile({
                 minHeight={120}
               />
               <span className="hint">
-                Added below the cursor when you compose or reply, so you can edit or delete it
-                per message.
+                Added below the cursor when you compose or reply, so you can edit or delete it per
+                message.
               </span>
             </div>
 

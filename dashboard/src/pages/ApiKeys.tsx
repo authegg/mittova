@@ -8,7 +8,8 @@ import {
   EmptyState,
   Sheet,
   TableSkeleton,
-  absoluteTime, compactTime,
+  absoluteTime,
+  compactTime,
   relativeTime,
 } from "../components/ui";
 import Icon from "../components/Icon";
@@ -114,7 +115,12 @@ function RevealSheet({ apiKey, onClose }: { apiKey: ApiKey; onClose: () => void 
         <label className="field">
           <span>{apiKey.name}</span>
           <div className="row">
-            <input readOnly value={apiKey.plaintext ?? ""} className="mono" onFocus={(e) => e.target.select()} />
+            <input
+              readOnly
+              value={apiKey.plaintext ?? ""}
+              className="mono"
+              onFocus={(e) => e.target.select()}
+            />
             <CopyButton value={apiKey.plaintext ?? ""} />
           </div>
         </label>
@@ -153,7 +159,11 @@ export default function ApiKeys({ mailboxes }: { mailboxes: Mailbox[] }) {
             <span className="mono">/api/v1/emails</span>. Separate from the dashboard password.
           </p>
         </div>
-        <button className="primary" onClick={() => setCreating(true)} disabled={mailboxes.length === 0}>
+        <button
+          className="primary"
+          onClick={() => setCreating(true)}
+          disabled={mailboxes.length === 0}
+        >
           <Icon name="plus" size={14} /> Create key
         </button>
       </div>
@@ -197,7 +207,9 @@ export default function ApiKeys({ mailboxes }: { mailboxes: Mailbox[] }) {
                         <Badge tone="warn">any mailbox</Badge>
                       ) : (
                         <span className="mono small">
-                          {k.restrictMailboxId ? byId.get(k.restrictMailboxId) ?? "deleted mailbox" : "—"}
+                          {k.restrictMailboxId
+                            ? (byId.get(k.restrictMailboxId) ?? "deleted mailbox")
+                            : "—"}
                         </span>
                       )}
                     </td>

@@ -41,8 +41,12 @@ async function session(email, password) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  if (!res.ok) throw new Error(`login failed for ${email ?? "admin"}: ${res.status} ${await res.text()}`);
-  const cookie = res.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
+  if (!res.ok)
+    throw new Error(`login failed for ${email ?? "admin"}: ${res.status} ${await res.text()}`);
+  const cookie = res.headers
+    .getSetCookie()
+    .map((c) => c.split(";")[0])
+    .join("; ");
   return async (path, init = {}, org) => {
     const r = await fetch(`${BASE}/api${path}`, {
       ...init,
@@ -54,7 +58,9 @@ async function session(email, password) {
       },
     });
     let body = null;
-    try { body = await r.json(); } catch {}
+    try {
+      body = await r.json();
+    } catch {}
     return { status: r.status, body };
   };
 }
@@ -71,23 +77,35 @@ const admin = await session(undefined, ADMIN_PW);
 const TF = required("MITTOVA_ORG_B");
 const NX = required("MITTOVA_ORG_A");
 
-const mbox = await admin("/mailboxes", {
-  method: "POST",
-  body: JSON.stringify({ address: "isolation", domain: TF.replace(/^org_/, ""), name: "Isolation Test" }),
-}, TF);
+const mbox = await admin(
+  "/mailboxes",
+  {
+    method: "POST",
+    body: JSON.stringify({
+      address: "isolation",
+      domain: TF.replace(/^org_/, ""),
+      name: "Isolation Test",
+    }),
+  },
+  TF,
+);
 console.log("setup mailbox:", mbox.status, mbox.body?.address ?? JSON.stringify(mbox.body));
 
 const PW = "Tenant-Isolation-9271!";
-const tfUser = await admin("/users", {
-  method: "POST",
-  body: JSON.stringify({
-    email: `isolation@${TF.replace(/^org_/, "")}`,
-    name: "Isolation Owner",
-    role: "owner",
-    password: PW,
-    mailboxIds: mbox.body?.id ? [mbox.body.id] : [],
-  }),
-}, TF);
+const tfUser = await admin(
+  "/users",
+  {
+    method: "POST",
+    body: JSON.stringify({
+      email: `isolation@${TF.replace(/^org_/, "")}`,
+      name: "Isolation Owner",
+      role: "owner",
+      password: PW,
+      mailboxIds: mbox.body?.id ? [mbox.body.id] : [],
+    }),
+  },
+  TF,
+);
 console.log("setup user:", tfUser.status, tfUser.body?.email ?? JSON.stringify(tfUser.body));
 
 // What org A actually has, seen by the admin, to target in the attacks.
@@ -105,39 +123,83 @@ const tf = await session(`isolation@${TF.replace(/^org_/, "")}`, PW);
 
 const boxes = await tf("/mailboxes");
 const addrs = (boxes.body ?? []).map((m) => m.address);
-check("sees only its own mailboxes", addrs.every((a) => a.endsWith(`@${TF.replace(/^org_/, "")}`)), addrs.join(", ") || "none");
+check(
+  "sees only its own mailboxes",
+  addrs.every((a) => a.endsWith(`@${TF.replace(/^org_/, "")}`)),
+  addrs.join(", ") || "none",
+);
 
 const users = await tf("/users");
 const emails = (users.body ?? []).map((u) => u.email);
-check("sees only its own users", emails.every((e) => e.endsWith(`@${TF.replace(/^org_/, "")}`)), emails.join(", ") || "none");
+check(
+  "sees only its own users",
+  emails.every((e) => e.endsWith(`@${TF.replace(/^org_/, "")}`)),
+  emails.join(", ") || "none",
+);
 
 const doms = await tf("/domains");
 const dl = (doms.body ?? []).map((d) => d.domain);
-check("sees only its own domains", dl.length === 1 && dl[0] === TF.replace(/^org_/, ""), dl.join(", ") || "none");
+check(
+  "sees only its own domains",
+  dl.length === 1 && dl[0] === TF.replace(/^org_/, ""),
+  dl.join(", ") || "none",
+);
 
 // The header is a view preference for platform admins, never a grant.
 const spoof = await tf("/mailboxes", {}, NX);
 const spoofed = (spoof.body ?? []).map((m) => m.address);
-check("org header cannot be used to cross over", spoofed.every((a) => a.endsWith(`@${TF.replace(/^org_/, "")}`)), spoofed.join(", ") || "none");
+check(
+  "org header cannot be used to cross over",
+  spoofed.every((a) => a.endsWith(`@${TF.replace(/^org_/, "")}`)),
+  spoofed.join(", ") || "none",
+);
 
-const readVictim = await tf(`/mailboxes/${victim?.id}`, { method: "PATCH", body: JSON.stringify({ name: "pwned" }) });
-check("cannot rename another tenant's mailbox", readVictim.status === 404, `HTTP ${readVictim.status}`);
+const readVictim = await tf(`/mailboxes/${victim?.id}`, {
+  method: "PATCH",
+  body: JSON.stringify({ name: "pwned" }),
+});
+check(
+  "cannot rename another tenant's mailbox",
+  readVictim.status === 404,
+  `HTTP ${readVictim.status}`,
+);
 
 const delVictim = await tf(`/mailboxes/${victim?.id}`, { method: "DELETE" });
-check("cannot delete another tenant's mailbox", delVictim.status === 404, `HTTP ${delVictim.status}`);
+check(
+  "cannot delete another tenant's mailbox",
+  delVictim.status === 404,
+  `HTTP ${delVictim.status}`,
+);
 
-const takeover = await tf(`/users/${victimUser?.id}`, { method: "PATCH", body: JSON.stringify({ password: "Attacker-Owns-You-1!" }) });
-check("cannot reset another tenant's user password", takeover.status === 404, `HTTP ${takeover.status}`);
+const takeover = await tf(`/users/${victimUser?.id}`, {
+  method: "PATCH",
+  body: JSON.stringify({ password: "Attacker-Owns-You-1!" }),
+});
+check(
+  "cannot reset another tenant's user password",
+  takeover.status === 404,
+  `HTTP ${takeover.status}`,
+);
 
 const delUser = await tf(`/users/${victimUser?.id}`, { method: "DELETE" });
 check("cannot delete another tenant's user", delUser.status === 404, `HTTP ${delUser.status}`);
 
-const grant = await tf(`/users/${tfUser.body?.id}`, { method: "PATCH", body: JSON.stringify({ mailboxIds: [victim?.id] }) });
+const grant = await tf(`/users/${tfUser.body?.id}`, {
+  method: "PATCH",
+  body: JSON.stringify({ mailboxIds: [victim?.id] }),
+});
 const after = await tf("/mailboxes");
 const grantedAddrs = (after.body ?? []).map((m) => m.address);
-check("cannot grant itself another tenant's mailbox", !grantedAddrs.includes(victim?.address), `HTTP ${grant.status}, now sees ${grantedAddrs.join(", ") || "none"}`);
+check(
+  "cannot grant itself another tenant's mailbox",
+  !grantedAddrs.includes(victim?.address),
+  `HTTP ${grant.status}, now sees ${grantedAddrs.join(", ") || "none"}`,
+);
 
-const sendAs = await tf("/send", { method: "POST", body: JSON.stringify({ mailboxId: victim?.id, to: ["x@example.com"], subject: "x", text: "x" }) });
+const sendAs = await tf("/send", {
+  method: "POST",
+  body: JSON.stringify({ mailboxId: victim?.id, to: ["x@example.com"], subject: "x", text: "x" }),
+});
 check("cannot send as another tenant's mailbox", sendAs.status === 403, `HTTP ${sendAs.status}`);
 
 const backup = await tf("/backups");
@@ -164,11 +226,19 @@ check(
 
 const msgs = await tf("/messages");
 const mboxes2 = [...new Set((msgs.body?.messages ?? []).map((m) => m.mailboxAddress))];
-check("sees no other tenant's messages", mboxes2.every((a) => a.endsWith(`@${TF.replace(/^org_/, "")}`)), mboxes2.join(", ") || "none");
+check(
+  "sees no other tenant's messages",
+  mboxes2.every((a) => a.endsWith(`@${TF.replace(/^org_/, "")}`)),
+  mboxes2.join(", ") || "none",
+);
 
 const search = await tf("/messages?q=the");
 const found = [...new Set((search.body?.messages ?? []).map((m) => m.mailboxAddress))];
-check("search respects the boundary", found.every((a) => a.endsWith(`@${TF.replace(/^org_/, "")}`)), found.join(", ") || "none");
+check(
+  "search respects the boundary",
+  found.every((a) => a.endsWith(`@${TF.replace(/^org_/, "")}`)),
+  found.join(", ") || "none",
+);
 
 console.log("---");
 const failed = results.filter((r) => !r.pass);

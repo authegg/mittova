@@ -122,9 +122,7 @@ export default function Compose({
     const t = (templates.data ?? []).find((x) => x.slug === slug);
     if (!t) return;
     setSubject(t.subject);
-    setHtml(
-      t.bodyHtml || `<div>${escapeHtml(t.bodyText).replace(/\n/g, "<br>")}</div>`,
-    );
+    setHtml(t.bodyHtml || `<div>${escapeHtml(t.bodyText).replace(/\n/g, "<br>")}</div>`);
   }
 
   async function addFiles(e: ChangeEvent<HTMLInputElement>) {
@@ -267,7 +265,10 @@ export default function Compose({
         {(templates.data ?? []).length > 0 && (
           <label className="field">
             <span>Start from a template</span>
-            <select defaultValue="" onChange={(e) => e.target.value && applyTemplate(e.target.value)}>
+            <select
+              defaultValue=""
+              onChange={(e) => e.target.value && applyTemplate(e.target.value)}
+            >
               <option value="">None</option>
               {(templates.data ?? []).map((t) => (
                 <option key={t.id} value={t.slug}>

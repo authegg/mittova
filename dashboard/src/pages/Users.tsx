@@ -377,7 +377,11 @@ export default function Users({ mailboxes }: { mailboxes: Mailbox[] }) {
                       )}
                     </td>
                     <td className="small muted truncate">
-                      <MailboxCell user={u} addressById={addressById} loaded={mailboxes.length > 0} />
+                      <MailboxCell
+                        user={u}
+                        addressById={addressById}
+                        loaded={mailboxes.length > 0}
+                      />
                     </td>
                     <td className="small muted">
                       {u.lastLoginAt ? relativeTime(u.lastLoginAt) : "never"}

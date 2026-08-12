@@ -15,7 +15,7 @@ describe("formatHtml", () => {
 
   it("does not indent past a void element", () => {
     expect(formatHtml("<div><img src='a.png'><p>after</p></div>")).toBe(
-      ["<div>", '  <img src=\'a.png\'>', "  <p>after</p>", "</div>"].join("\n"),
+      ["<div>", "  <img src='a.png'>", "  <p>after</p>", "</div>"].join("\n"),
     );
   });
 

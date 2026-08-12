@@ -72,11 +72,7 @@ function equalHex(a: string, b: string): boolean {
 }
 
 export async function verifyPassword(password: string, record: PasswordRecord): Promise<boolean> {
-  const candidate = await derive(
-    password,
-    fromHex(record.passwordSalt),
-    record.passwordIterations,
-  );
+  const candidate = await derive(password, fromHex(record.passwordSalt), record.passwordIterations);
   return equalHex(candidate, record.passwordHash);
 }
 

@@ -29,7 +29,8 @@
     "db:generate": "drizzle-kit generate",
     "db:apply:local": "wrangler d1 migrations apply mittova-mail --local",
     "db:apply": "wrangler d1 migrations apply mittova-mail --remote",
-    "check": "tsc --noEmit && npm --prefix dashboard run typecheck && vitest run",
+    "check": "prettier --check . && tsc --noEmit && npm --prefix dashboard run typecheck && vitest run",
+    "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:worker": "vitest run --project worker",
@@ -45,6 +46,7 @@
     "@cloudflare/vitest-pool-workers": "^0.20.1",
     "@cloudflare/workers-types": "^5.20260808.1",
     "drizzle-kit": "^0.31.6",
+    "prettier": "^3.9.6",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10",
     "wrangler": "^4.118.0"

@@ -38,7 +38,9 @@ describe("safeHref control-character stripping", () => {
     expect(sanitiseEmailHtml(`<a href="https://example.com">ok</a>`)).toContain(
       'href="https://example.com"',
     );
-    expect(sanitiseEmailHtml(`<a href="http://example.com">ok</a>`)).toContain("http://example.com");
+    expect(sanitiseEmailHtml(`<a href="http://example.com">ok</a>`)).toContain(
+      "http://example.com",
+    );
     expect(sanitiseEmailHtml(`<a href="mailto:a@b.com">ok</a>`)).toContain("mailto:a@b.com");
   });
 

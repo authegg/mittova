@@ -46,7 +46,8 @@ export type IconName =
   | "archive";
 
 /** Shared by the outline and filled star so the shape cannot drift. */
-const STAR_D = "m12 4.5 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16.49l-4.7 2.47.9-5.23-3.8-3.7 5.25-.77z";
+const STAR_D =
+  "m12 4.5 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16.49l-4.7 2.47.9-5.23-3.8-3.7 5.25-.77z";
 
 const paths: Record<IconName, React.ReactNode> = {
   /**

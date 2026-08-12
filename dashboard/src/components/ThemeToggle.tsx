@@ -18,9 +18,7 @@ export function initTheme() {
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(KEY) as Theme) ?? "system",
-  );
+  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem(KEY) as Theme) ?? "system");
 
   // Applied on change rather than in an effect: an effect would re-run
   // initTheme's work on mount and persist "system" before the user picked it.

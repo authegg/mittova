@@ -9,7 +9,17 @@ import { sanitiseEmailHtml, htmlToText, wrapForEmail } from "./html";
 describe("sanitiseEmailHtml", () => {
   const mustNotContain = (html: string) => {
     const out = sanitiseEmailHtml(html).toLowerCase();
-    for (const bad of ["<script", "<style", "<iframe", "<object", "<embed", "javascript:", "onerror", "onclick", "onload"]) {
+    for (const bad of [
+      "<script",
+      "<style",
+      "<iframe",
+      "<object",
+      "<embed",
+      "javascript:",
+      "onerror",
+      "onclick",
+      "onload",
+    ]) {
       expect(out, `leaked ${bad} from: ${html}`).not.toContain(bad);
     }
     return out;
@@ -36,13 +46,13 @@ describe("sanitiseEmailHtml", () => {
   });
 
   it.each([
-    'javascript:alert(1)',
-    'JaVaScRiPt:alert(1)',
-    'java\tscript:alert(1)',
-    'java\nscript:alert(1)',
-    ' javascript:alert(1)',
-    'data:text/html;base64,PHNjcmlwdD4=',
-    'vbscript:msgbox',
+    "javascript:alert(1)",
+    "JaVaScRiPt:alert(1)",
+    "java\tscript:alert(1)",
+    "java\nscript:alert(1)",
+    " javascript:alert(1)",
+    "data:text/html;base64,PHNjcmlwdD4=",
+    "vbscript:msgbox",
   ])("rejects hostile href %j", (href) => {
     const out = mustNotContain(`<a href="${href}">x</a>`);
     expect(out).not.toContain("href=");
@@ -86,7 +96,17 @@ describe("sanitiseEmailHtml", () => {
   });
 
   it("survives malformed and adversarial input without throwing", () => {
-    for (const input of ["<", "<<<>>>", "<p", "<p ", '<a href=', "<!-- c -->", "<![CDATA[x]]>", "", "   "]) {
+    for (const input of [
+      "<",
+      "<<<>>>",
+      "<p",
+      "<p ",
+      "<a href=",
+      "<!-- c -->",
+      "<![CDATA[x]]>",
+      "",
+      "   ",
+    ]) {
       expect(() => sanitiseEmailHtml(input)).not.toThrow();
     }
   });
@@ -147,7 +167,7 @@ describe("wrapForEmail", () => {
   });
 
   it("leaves inline tags alone", () => {
-    expect(wrapForEmail("<p>a <b>b</b> <a href=\"https://e.com\">l</a></p>")).toContain(
+    expect(wrapForEmail('<p>a <b>b</b> <a href="https://e.com">l</a></p>')).toContain(
       '<b>b</b> <a href="https://e.com">l</a>',
     );
   });

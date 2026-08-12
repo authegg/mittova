@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { api } from "../api";
 import { useAsync, useToast } from "../hooks";
-import { Card, EmptyState, Sheet, TableSkeleton , Pager} from "../components/ui";
+import { Card, EmptyState, Sheet, TableSkeleton, Pager } from "../components/ui";
 import { usePaged } from "../hooks-paging";
 import Icon from "../components/Icon";
 
@@ -17,7 +17,9 @@ export default function Contacts({ onCompose }: { onCompose: (to: string) => voi
       <div className="page-head">
         <div>
           <h1>Contacts</h1>
-          <p>An address book for the people you mail regularly, so you are not retyping addresses.</p>
+          <p>
+            An address book for the people you mail regularly, so you are not retyping addresses.
+          </p>
         </div>
         <button className="primary" onClick={() => setCreating(true)}>
           <Icon name="plus" size={14} /> Add contact
@@ -60,62 +62,62 @@ export default function Contacts({ onCompose }: { onCompose: (to: string) => voi
           />
         ) : (
           <>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ width: 200 }}>Name</th>
-                  <th style={{ width: 240 }}>Email</th>
-                  <th>Company / notes</th>
-                  <th style={{ width: 110 }} className="num">
-                    Added
-                  </th>
-                  <th style={{ width: 130 }} />
-                </tr>
-              </thead>
-              <tbody>
-                {paged.slice.map((ct) => (
-                  <tr key={ct.id}>
-                    <td className="cell-strong">{ct.name || <span className="muted">—</span>}</td>
-                    <td className="mono small">{ct.email}</td>
-                    <td className="small muted truncate">
-                      {[ct.company, ct.notes].filter(Boolean).join(" · ") || "—"}
-                    </td>
-                    <td className="num small muted">
-                      {new Date(ct.createdAt).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </td>
-                    <td>
-                      <div className="row">
-                        <button className="sm" onClick={() => onCompose(ct.email)}>
-                          Email
-                        </button>
-                        <button
-                          className="danger sm"
-                          onClick={async () => {
-                            await api.deleteContact(ct.id);
-                            list.reload();
-                            toast("Contact removed");
-                          }}
-                        >
-                          <Icon name="trash" size={13} />
-                        </button>
-                      </div>
-                    </td>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ width: 200 }}>Name</th>
+                    <th style={{ width: 240 }}>Email</th>
+                    <th>Company / notes</th>
+                    <th style={{ width: 110 }} className="num">
+                      Added
+                    </th>
+                    <th style={{ width: 130 }} />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <Pager
-            page={paged.page}
-            pageCount={paged.pageCount}
-            total={paged.total}
-            shown={paged.slice.length}
-            onPage={paged.setPage}
-          />
+                </thead>
+                <tbody>
+                  {paged.slice.map((ct) => (
+                    <tr key={ct.id}>
+                      <td className="cell-strong">{ct.name || <span className="muted">—</span>}</td>
+                      <td className="mono small">{ct.email}</td>
+                      <td className="small muted truncate">
+                        {[ct.company, ct.notes].filter(Boolean).join(" · ") || "—"}
+                      </td>
+                      <td className="num small muted">
+                        {new Date(ct.createdAt).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </td>
+                      <td>
+                        <div className="row">
+                          <button className="sm" onClick={() => onCompose(ct.email)}>
+                            Email
+                          </button>
+                          <button
+                            className="danger sm"
+                            onClick={async () => {
+                              await api.deleteContact(ct.id);
+                              list.reload();
+                              toast("Contact removed");
+                            }}
+                          >
+                            <Icon name="trash" size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pager
+              page={paged.page}
+              pageCount={paged.pageCount}
+              total={paged.total}
+              shown={paged.slice.length}
+              onPage={paged.setPage}
+            />
           </>
         )}
       </Card>

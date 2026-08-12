@@ -30,11 +30,7 @@ export function routingConfigured(env: Env): boolean {
   return Boolean(env.CF_API_TOKEN);
 }
 
-export async function createRoutingRule(
-  db: Db,
-  env: Env,
-  address: string,
-): Promise<RoutingResult> {
+export async function createRoutingRule(db: Db, env: Env, address: string): Promise<RoutingResult> {
   const c = creds(env, await zoneForAddress(db, env, address));
   if (!c) return { configured: false };
 

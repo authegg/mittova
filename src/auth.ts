@@ -112,11 +112,9 @@ export async function startSession(
   userId: string | null,
 ): Promise<void> {
   const token = crypto.randomUUID();
-  await c.env.SETTINGS.put(
-    `session:${token}`,
-    JSON.stringify({ userId, createdAt: Date.now() }),
-    { expirationTtl: TTL_SECONDS },
-  );
+  await c.env.SETTINGS.put(`session:${token}`, JSON.stringify({ userId, createdAt: Date.now() }), {
+    expirationTtl: TTL_SECONDS,
+  });
   setCookie(c, COOKIE, token, {
     httpOnly: true,
     secure: true,
@@ -263,10 +261,7 @@ export async function resolveScope(c: Context<{ Bindings: Env }>): Promise<Scope
   };
 }
 
-export const requireAuth: MiddlewareHandler<{ Bindings: Env }> = async (
-  c,
-  next,
-) => {
+export const requireAuth: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   const scope = await resolveScope(c);
   if (!scope) return c.json({ error: "unauthorized" }, 401);
   c.set("scope", scope);
@@ -274,10 +269,7 @@ export const requireAuth: MiddlewareHandler<{ Bindings: Env }> = async (
 };
 
 /** Account-level administration: users, keys, webhooks, domain, billing-ish. */
-export const requireOwner: MiddlewareHandler<{ Bindings: Env }> = async (
-  c,
-  next,
-) => {
+export const requireOwner: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   const scope = await resolveScope(c);
   if (!scope) return c.json({ error: "unauthorized" }, 401);
   if (scope.role !== "owner") {

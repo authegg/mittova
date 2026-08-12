@@ -181,7 +181,12 @@ export default function Webhooks() {
         >
           <div className="stack">
             <div className="row">
-              <input readOnly className="mono" value={inspecting.secret} onFocus={(e) => e.target.select()} />
+              <input
+                readOnly
+                className="mono"
+                value={inspecting.secret}
+                onFocus={(e) => e.target.select()}
+              />
               <CopyButton value={inspecting.secret} />
             </div>
             <h3>Verifying a request</h3>

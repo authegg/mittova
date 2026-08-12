@@ -42,8 +42,8 @@ export function VariablesPanel({
       ) : (
         <div className="stack">
           <p className="small muted">
-            Found in the subject and body. Fill any in to see the preview with real-looking
-            content; the values are for looking only and are not saved with the template.
+            Found in the subject and body. Fill any in to see the preview with real-looking content;
+            the values are for looking only and are not saved with the template.
           </p>
           {variables.map((v) => (
             <label className="field" key={v}>
@@ -78,9 +78,7 @@ ${JSON.stringify(
   {
     to: ["someone@example.com"],
     template: template.slug,
-    ...(variables.length
-      ? { variables: Object.fromEntries(variables.map((v) => [v, "…"])) }
-      : {}),
+    ...(variables.length ? { variables: Object.fromEntries(variables.map((v) => [v, "…"])) } : {}),
   },
   null,
   2,

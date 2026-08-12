@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, type Draft, type Mailbox, type MessageSummary } from "../api";
 import { useAsync, usePoll } from "../hooks";
-import { Badge, Card, EmptyState, TableSkeleton, relativeTime, verdictTone } from "../components/ui";
+import {
+  Badge,
+  Card,
+  EmptyState,
+  TableSkeleton,
+  relativeTime,
+  verdictTone,
+} from "../components/ui";
 import Icon from "../components/Icon";
 
 export default function Emails({
@@ -62,9 +69,10 @@ export default function Emails({
 
   /** Optimistic: reloading 50 joined rows to toggle one bit is wasteful. */
   const flag = useCallback(async (id: string, patch: { archived?: boolean; starred?: boolean }) => {
-    const numeric = Object.fromEntries(
-      Object.entries(patch).map(([k, v]) => [k, v ? 1 : 0]),
-    ) as { archived?: number; starred?: number };
+    const numeric = Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v ? 1 : 0])) as {
+      archived?: number;
+      starred?: number;
+    };
     setFlags((prev) => ({ ...prev, [id]: { ...prev[id], ...numeric } }));
     try {
       await api.flag(id, patch);
@@ -199,46 +207,50 @@ export default function Emails({
 
       {(drafts.data ?? []).length > 0 && (
         <div style={{ marginBottom: 16 }}>
-        <Card
-          title="Unsent drafts"
-          action={<span className="small muted">{(drafts.data ?? []).length}</span>}
-          tight
-        >
-          <div className="table-wrap">
-            <table>
-              <tbody>
-                {(drafts.data ?? []).map((d) => (
-                  <tr key={d.id} className="clickable" onClick={() => onResumeDraft(d)}>
-                    <td className="mono small truncate" style={{ width: 220 }}>
-                      {d.toAddr || "(no recipient)"}
-                    </td>
-                    <td className="truncate cell-strong">{d.subject || "(no subject)"}</td>
-                    <td className="num small muted" style={{ width: 110 }}>
-                      {relativeTime(d.updatedAt)}
-                    </td>
-                    <td style={{ width: 90 }}>
-                      <button
-                        className="danger sm"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await api.deleteDraft(d.id);
-                          drafts.reload();
-                        }}
-                      >
-                        Discard
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+          <Card
+            title="Unsent drafts"
+            action={<span className="small muted">{(drafts.data ?? []).length}</span>}
+            tight
+          >
+            <div className="table-wrap">
+              <table>
+                <tbody>
+                  {(drafts.data ?? []).map((d) => (
+                    <tr key={d.id} className="clickable" onClick={() => onResumeDraft(d)}>
+                      <td className="mono small truncate" style={{ width: 220 }}>
+                        {d.toAddr || "(no recipient)"}
+                      </td>
+                      <td className="truncate cell-strong">{d.subject || "(no subject)"}</td>
+                      <td className="num small muted" style={{ width: 110 }}>
+                        {relativeTime(d.updatedAt)}
+                      </td>
+                      <td style={{ width: 90 }}>
+                        <button
+                          className="danger sm"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await api.deleteDraft(d.id);
+                            drafts.reload();
+                          }}
+                        >
+                          Discard
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </div>
       )}
 
       <section className="card">
-        {list.error && <div className="card-body"><div className="notice bad">{list.error}</div></div>}
+        {list.error && (
+          <div className="card-body">
+            <div className="notice bad">{list.error}</div>
+          </div>
+        )}
 
         {list.loading && rows.length === 0 ? (
           <TableSkeleton rows={8} cols={5} />

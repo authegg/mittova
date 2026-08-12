@@ -87,7 +87,9 @@ export const users = sqliteTable(
     email: text("email").notNull(),
     name: text("name").notNull().default(""),
     /** owner manages the org; member only sees assigned mailboxes within it. */
-    role: text("role", { enum: ["owner", "member"] }).notNull().default("member"),
+    role: text("role", { enum: ["owner", "member"] })
+      .notNull()
+      .default("member"),
     /**
      * The org this person belongs to. Empty means a platform administrator who
      * can act in any org, which is also what the break-glass ADMIN_PASSWORD
@@ -303,7 +305,9 @@ export const apiKeys = sqliteTable(
     /** Display-only, e.g. "mv_live_a1b2…f7c9". */
     preview: text("preview").notNull(),
     /** "full" can send from any mailbox; "sending" is restricted to restrictMailboxId. */
-    scope: text("scope", { enum: ["full", "sending"] }).notNull().default("sending"),
+    scope: text("scope", { enum: ["full", "sending"] })
+      .notNull()
+      .default("sending"),
     restrictMailboxId: text("restrict_mailbox_id").references(() => mailboxes.id, {
       onDelete: "cascade",
     }),

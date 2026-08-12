@@ -49,11 +49,7 @@ export async function ingestEmail(
   const db = drizzle(env.DB);
   const recipient = message.to.toLowerCase();
 
-  const mailbox = await db
-    .select()
-    .from(mailboxes)
-    .where(eq(mailboxes.address, recipient))
-    .get();
+  const mailbox = await db.select().from(mailboxes).where(eq(mailboxes.address, recipient)).get();
 
   if (!mailbox) {
     // Routing rules should prevent this, but never silently swallow mail.
@@ -88,7 +84,11 @@ export async function ingestEmail(
     fromAddr: message.from.toLowerCase(),
     fromName: parsed.from?.name ?? "",
     toAddr: recipient,
-    ccAddr: parsed.cc?.map((a) => a.address).filter(Boolean).join(", ") || null,
+    ccAddr:
+      parsed.cc
+        ?.map((a) => a.address)
+        .filter(Boolean)
+        .join(", ") || null,
     subject: parsed.subject ?? "(no subject)",
     snippet: snippetOf(parsed.text, parsed.html),
     bodyText: parsed.text ?? null,
@@ -115,8 +115,19 @@ export async function ingestEmail(
     );
 
   const bounce = maybeBounce
-    ? detectBounce(message.from, new TextDecoder().decode(new Uint8Array(rawBuffer, 0, Math.min(rawBuffer.byteLength, 16 * 1024))))
-    : { isBounce: false, permanent: false, recipients: [] as string[], status: null, diagnostic: null };
+    ? detectBounce(
+        message.from,
+        new TextDecoder().decode(
+          new Uint8Array(rawBuffer, 0, Math.min(rawBuffer.byteLength, 16 * 1024)),
+        ),
+      )
+    : {
+        isBounce: false,
+        permanent: false,
+        recipients: [] as string[],
+        status: null,
+        diagnostic: null,
+      };
 
   if (bounce.isBounce && bounce.permanent && bounce.recipients.length > 0) {
     // Suppressed for the tenant that owns the mailbox the report came back to,
@@ -156,7 +167,10 @@ export async function ingestEmail(
     const attId = crypto.randomUUID();
     const filename = att.filename ?? `attachment-${attId}`;
     const key = attachmentKey(mailbox.address, id, attId);
-    const body = att.content instanceof ArrayBuffer ? att.content : new TextEncoder().encode(String(att.content));
+    const body =
+      att.content instanceof ArrayBuffer
+        ? att.content
+        : new TextEncoder().encode(String(att.content));
     await env.STORAGE.put(key, body, {
       httpMetadata: { contentType: att.mimeType ?? "application/octet-stream" },
     });

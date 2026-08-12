@@ -72,7 +72,10 @@ async function seed() {
       [`tpl_${org}`, "welcome", "Welcome", "Hi", "hello", "<p>hello</p>", "", "", org, now, now],
     ]);
   }
-  for (const [sql, args] of rows) await env.DB.prepare(sql).bind(...args).run();
+  for (const [sql, args] of rows)
+    await env.DB.prepare(sql)
+      .bind(...args)
+      .run();
 }
 
 /** An owner inside one tenant, created through the API so hashing is real. */
@@ -119,7 +122,9 @@ describe("tenant isolation", () => {
       (await call(`/api/templates/${id}`, { method: "PATCH", body: json({ subject: "x" }) }, alpha))
         .status,
     ).toBe(404);
-    expect((await call(`/api/templates/${id}/duplicate`, { method: "POST" }, alpha)).status).toBe(404);
+    expect((await call(`/api/templates/${id}/duplicate`, { method: "POST" }, alpha)).status).toBe(
+      404,
+    );
     expect((await call(`/api/templates/${id}/versions`, {}, alpha)).status).toBe(404);
     expect((await call(`/api/templates/${id}`, { method: "DELETE" }, alpha)).status).toBe(200);
 
@@ -177,7 +182,11 @@ describe("tenant isolation", () => {
   });
 
   it("keeps the audit trail within the tenant", async () => {
-    await call("/api/templates", { method: "POST", body: json({ slug: "mine", name: "Mine" }) }, alpha);
+    await call(
+      "/api/templates",
+      { method: "POST", body: json({ slug: "mine", name: "Mine" }) },
+      alpha,
+    );
     const now = Date.now();
     await env.DB.prepare(
       "insert into audit_log (id,actor_id,actor_email,action,target,detail,org_id,created_at) values (?,?,?,?,?,?,?,?)",
@@ -210,7 +219,11 @@ describe("tenant isolation over the bearer API", () => {
     const admin = await signIn(undefined, "test-admin-password");
     const res = await call(
       "/api/api-keys",
-      { method: "POST", body: json({ name: "k", scope: "full" }), headers: { "x-mittova-org": org } },
+      {
+        method: "POST",
+        body: json({ name: "k", scope: "full" }),
+        headers: { "x-mittova-org": org },
+      },
       admin,
     );
     expect(res.status).toBe(201);
@@ -382,8 +395,12 @@ describe("user invites", () => {
   it("works once", async () => {
     const { token } = await invite("once@alpha.test");
     expect(
-      (await call("/api/auth/accept", { method: "POST", body: json({ token, password: PASSWORD }) }))
-        .status,
+      (
+        await call("/api/auth/accept", {
+          method: "POST",
+          body: json({ token, password: PASSWORD }),
+        })
+      ).status,
     ).toBe(200);
     // A forwarded invite mail must not be a second way in.
     expect(
@@ -402,8 +419,12 @@ describe("user invites", () => {
       .bind(Date.now() - 1000, id)
       .run();
     expect(
-      (await call("/api/auth/accept", { method: "POST", body: json({ token, password: PASSWORD }) }))
-        .status,
+      (
+        await call("/api/auth/accept", {
+          method: "POST",
+          body: json({ token, password: PASSWORD }),
+        })
+      ).status,
     ).toBe(400);
   });
 
@@ -584,7 +605,9 @@ describe("mailbox assignment stays inside the account's tenant", () => {
       { method: "PATCH", body: json({ mailboxIds: ["mb_org_alpha", "mb_org_beta"] }) },
       admin,
     );
-    const audit = await (await call("/api/audit", {}, admin)).json<{ detail: string; action: string }[]>();
+    const audit = await (
+      await call("/api/audit", {}, admin)
+    ).json<{ detail: string; action: string }[]>();
     const entry = audit.find((a) => a.action === "user.mailboxes");
     expect(entry?.detail).toBe("1 assigned");
   });

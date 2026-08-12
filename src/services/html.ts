@@ -11,9 +11,29 @@
  */
 
 const ALLOWED_TAGS = new Set([
-  "p", "br", "div", "span", "b", "strong", "i", "em", "u", "s", "strike",
-  "ul", "ol", "li", "blockquote", "a", "pre", "code",
-  "h1", "h2", "h3", "h4", "hr",
+  "p",
+  "br",
+  "div",
+  "span",
+  "b",
+  "strong",
+  "i",
+  "em",
+  "u",
+  "s",
+  "strike",
+  "ul",
+  "ol",
+  "li",
+  "blockquote",
+  "a",
+  "pre",
+  "code",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "hr",
 ]);
 
 /** Per-tag attribute allowlist. Everything else is dropped. */
@@ -23,8 +43,15 @@ const ALLOWED_ATTRS: Record<string, Set<string>> = {
 
 /** Only these CSS properties survive, and only with simple values. */
 const ALLOWED_STYLES = new Set([
-  "color", "background-color", "font-weight", "font-style",
-  "text-decoration", "text-align", "margin", "padding", "font-size",
+  "color",
+  "background-color",
+  "font-weight",
+  "font-style",
+  "text-decoration",
+  "text-align",
+  "margin",
+  "padding",
+  "font-size",
 ]);
 
 const VOID_TAGS = new Set(["br", "hr", "img", "col"]);
@@ -42,13 +69,36 @@ const VOID_TAGS = new Set(["br", "hr", "img", "col"]);
  * modes, and an image source is held to the same scheme check as a link.
  */
 const LAYOUT_TAGS = new Set([
-  "table", "thead", "tbody", "tfoot", "tr", "td", "th",
-  "caption", "colgroup", "col", "img", "center", "small", "sup", "sub",
-  "h5", "h6",
+  "table",
+  "thead",
+  "tbody",
+  "tfoot",
+  "tr",
+  "td",
+  "th",
+  "caption",
+  "colgroup",
+  "col",
+  "img",
+  "center",
+  "small",
+  "sup",
+  "sub",
+  "h5",
+  "h6",
 ]);
 
 const LAYOUT_ATTRS: Record<string, Set<string>> = {
-  table: new Set(["width", "height", "align", "bgcolor", "border", "cellpadding", "cellspacing", "role"]),
+  table: new Set([
+    "width",
+    "height",
+    "align",
+    "bgcolor",
+    "border",
+    "cellpadding",
+    "cellspacing",
+    "role",
+  ]),
   td: new Set(["width", "height", "align", "valign", "bgcolor", "colspan", "rowspan"]),
   th: new Set(["width", "height", "align", "valign", "bgcolor", "colspan", "rowspan"]),
   tr: new Set(["align", "valign", "bgcolor", "height"]),
@@ -59,12 +109,35 @@ const LAYOUT_ATTRS: Record<string, Set<string>> = {
 
 /** CSS an email layout needs beyond what composed prose does. */
 const LAYOUT_STYLES = new Set([
-  "background", "border", "border-top", "border-right", "border-bottom", "border-left",
-  "border-radius", "border-collapse", "border-spacing", "display", "width", "height",
-  "max-width", "min-width", "line-height", "letter-spacing", "font-family", "vertical-align",
-  "margin-top", "margin-right", "margin-bottom", "margin-left",
-  "padding-top", "padding-right", "padding-bottom", "padding-left",
-  "text-transform", "white-space", "mso-line-height-rule",
+  "background",
+  "border",
+  "border-top",
+  "border-right",
+  "border-bottom",
+  "border-left",
+  "border-radius",
+  "border-collapse",
+  "border-spacing",
+  "display",
+  "width",
+  "height",
+  "max-width",
+  "min-width",
+  "line-height",
+  "letter-spacing",
+  "font-family",
+  "vertical-align",
+  "margin-top",
+  "margin-right",
+  "margin-bottom",
+  "margin-left",
+  "padding-top",
+  "padding-right",
+  "padding-bottom",
+  "padding-left",
+  "text-transform",
+  "white-space",
+  "mso-line-height-rule",
 ]);
 
 /**
@@ -73,8 +146,19 @@ const LAYOUT_STYLES = new Set([
  * clients, so an open paragraph is closed before one of these opens.
  */
 const BLOCK_TAGS = new Set([
-  "ul", "ol", "blockquote", "pre", "div", "h1", "h2", "h3", "h4", "hr", "p",
-  "table", "center",
+  "ul",
+  "ol",
+  "blockquote",
+  "pre",
+  "div",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "hr",
+  "p",
+  "table",
+  "center",
 ]);
 
 /**
@@ -222,8 +306,7 @@ export function sanitiseEmailHtml(input: string, options: SanitiseOptions = {}):
         if (style) attrs.push(`style="${escapeAttr(style)}"`);
         continue;
       }
-      const permitted =
-        ALLOWED_ATTRS[name]?.has(key) || (layout && LAYOUT_ATTRS[name]?.has(key));
+      const permitted = ALLOWED_ATTRS[name]?.has(key) || (layout && LAYOUT_ATTRS[name]?.has(key));
       if (!permitted) continue;
       if (key === "href") {
         const href = safeHref(value);
@@ -322,9 +405,9 @@ const BLOCK_STYLE: Record<string, string> = {
   ul: "margin:0 0 12px;padding-left:22px",
   ol: "margin:0 0 12px;padding-left:22px",
   li: "margin:0 0 4px",
-  blockquote:
-    "margin:0 0 12px;padding:0 0 0 12px;border-left:3px solid #d9d6cf;color:#55524c",
-  pre: "margin:0 0 12px;padding:10px 12px;background:#f7f6f3;border-radius:6px;" +
+  blockquote: "margin:0 0 12px;padding:0 0 0 12px;border-left:3px solid #d9d6cf;color:#55524c",
+  pre:
+    "margin:0 0 12px;padding:10px 12px;background:#f7f6f3;border-radius:6px;" +
     "font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;" +
     "white-space:pre-wrap",
   h1: "margin:20px 0 10px;font-size:20px;line-height:1.3",

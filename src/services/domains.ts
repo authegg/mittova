@@ -23,10 +23,12 @@ async function resolve(name: string, type: keyof typeof RECORD_TYPES): Promise<s
     });
     if (!res.ok) return [];
     const body = (await res.json()) as { Answer?: DohAnswer[] };
-    return (body.Answer ?? [])
-      .filter((a) => a.type === RECORD_TYPES[type])
-      // TXT answers come back quoted, and long ones arrive split into chunks.
-      .map((a) => a.data.replace(/^"|"$/g, "").replace(/" "/g, ""));
+    return (
+      (body.Answer ?? [])
+        .filter((a) => a.type === RECORD_TYPES[type])
+        // TXT answers come back quoted, and long ones arrive split into chunks.
+        .map((a) => a.data.replace(/^"|"$/g, "").replace(/" "/g, ""))
+    );
   } catch {
     return [];
   }
@@ -211,8 +213,8 @@ export async function removeDomain(db: Db, domain: string): Promise<void> {
 export async function checkDomain(domain: string): Promise<DomainStatus> {
   const bounce = `cf-bounce.${domain}`;
 
-  const [apexMx, apexSpf, routingDkim, bounceMx, bounceSpf, sendingDkim, dmarc] =
-    await Promise.all([
+  const [apexMx, apexSpf, routingDkim, bounceMx, bounceSpf, sendingDkim, dmarc] = await Promise.all(
+    [
       resolve(domain, "MX"),
       resolve(domain, "TXT"),
       resolve(`cf2024-1._domainkey.${domain}`, "TXT"),
@@ -220,7 +222,8 @@ export async function checkDomain(domain: string): Promise<DomainStatus> {
       resolve(bounce, "TXT"),
       resolve(`cf-bounce._domainkey.${domain}`, "TXT"),
       resolve(`_dmarc.${domain}`, "TXT"),
-    ]);
+    ],
+  );
 
   const isCloudflareMx = (v: string) => /route\d\.mx\.cloudflare\.net/i.test(v);
   const isCloudflareSpf = (v: string) =>

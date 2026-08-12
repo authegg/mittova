@@ -99,9 +99,7 @@ export default function RichText({
 
     const sel = window.getSelection();
     const node = sel?.anchorNode;
-    setInLink(
-      Boolean(node && (node.parentElement?.closest("a") ?? null)),
-    );
+    setInLink(Boolean(node && (node.parentElement?.closest("a") ?? null)));
   }, []);
 
   function run(tool: Tool) {

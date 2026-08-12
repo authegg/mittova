@@ -1,7 +1,16 @@
 import { useState, type FormEvent } from "react";
 import { api } from "../api";
 import { useAsync, useToast } from "../hooks";
-import { Badge, Card, EmptyState, Sheet, TableSkeleton, absoluteTime, compactTime , Pager} from "../components/ui";
+import {
+  Badge,
+  Card,
+  EmptyState,
+  Sheet,
+  TableSkeleton,
+  absoluteTime,
+  compactTime,
+  Pager,
+} from "../components/ui";
 import { usePaged } from "../hooks-paging";
 import Icon from "../components/Icon";
 
@@ -45,52 +54,52 @@ export default function Suppressions() {
           />
         ) : (
           <>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ width: 280 }}>Address</th>
-                  <th style={{ width: 120 }}>Reason</th>
-                  <th>Detail</th>
-                  <th style={{ width: 170 }} className="num">
-                    Added
-                  </th>
-                  <th style={{ width: 90 }} />
-                </tr>
-              </thead>
-              <tbody>
-                {paged.slice.map((s) => (
-                  <tr key={s.id}>
-                    <td className="mono small cell-strong">{s.email}</td>
-                    <td>
-                      <Badge tone={REASON_TONE[s.reason]}>{s.reason}</Badge>
-                    </td>
-                    <td className="small muted truncate">{s.detail || "—"}</td>
-                    <td className="num small muted">{compactTime(s.createdAt)}</td>
-                    <td>
-                      <button
-                        className="sm"
-                        onClick={async () => {
-                          await api.deleteSuppression(s.id);
-                          list.reload();
-                          toast(`${s.email} unblocked`);
-                        }}
-                      >
-                        Unblock
-                      </button>
-                    </td>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ width: 280 }}>Address</th>
+                    <th style={{ width: 120 }}>Reason</th>
+                    <th>Detail</th>
+                    <th style={{ width: 170 }} className="num">
+                      Added
+                    </th>
+                    <th style={{ width: 90 }} />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <Pager
-            page={paged.page}
-            pageCount={paged.pageCount}
-            total={paged.total}
-            shown={paged.slice.length}
-            onPage={paged.setPage}
-          />
+                </thead>
+                <tbody>
+                  {paged.slice.map((s) => (
+                    <tr key={s.id}>
+                      <td className="mono small cell-strong">{s.email}</td>
+                      <td>
+                        <Badge tone={REASON_TONE[s.reason]}>{s.reason}</Badge>
+                      </td>
+                      <td className="small muted truncate">{s.detail || "—"}</td>
+                      <td className="num small muted">{compactTime(s.createdAt)}</td>
+                      <td>
+                        <button
+                          className="sm"
+                          onClick={async () => {
+                            await api.deleteSuppression(s.id);
+                            list.reload();
+                            toast(`${s.email} unblocked`);
+                          }}
+                        >
+                          Unblock
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pager
+              page={paged.page}
+              pageCount={paged.pageCount}
+              total={paged.total}
+              shown={paged.slice.length}
+              onPage={paged.setPage}
+            />
           </>
         )}
       </Card>

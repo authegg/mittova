@@ -2,7 +2,6 @@ import type { Db } from "../db/types";
 import { auditLog } from "../db/schema";
 import type { Scope } from "../auth";
 
-
 /**
  * Everything worth an audit entry. A union rather than a bare string so adding
  * a privileged action forces a decision about logging it, and so the UI's tone

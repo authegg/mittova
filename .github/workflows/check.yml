@@ -37,6 +37,10 @@ jobs:
       # so it produces the same Env with placeholder values.
       - run: npx wrangler types --config wrangler.example.jsonc
 
+      # Formatting is checked, never rewritten in CI: a contributor gets told
+      # to run `npm run format` rather than having their branch edited.
+      - run: npx prettier --check .
+
       # Typecheck both halves: the Worker and the dashboard are separate
       # tsconfigs, and only the Worker's is covered by the root command.
       - run: npx tsc --noEmit

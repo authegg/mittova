@@ -61,8 +61,7 @@ async function main() {
     return;
   }
 
-  accountId =
-    (await rl.question(`Cloudflare account id [${accountId}]: `)).trim() || accountId;
+  accountId = (await rl.question(`Cloudflare account id [${accountId}]: `)).trim() || accountId;
   const domain = (await rl.question("Mail domain (for example example.com): ")).trim();
   if (!domain) {
     console.log(c.red("A domain is required."));
@@ -70,7 +69,9 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-  const zoneId = (await rl.question(`Zone id for ${domain} (blank to skip routing automation): `)).trim();
+  const zoneId = (
+    await rl.question(`Zone id for ${domain} (blank to skip routing automation): `)
+  ).trim();
 
   /* ----------------------------------------------------------- resources -- */
 
@@ -144,7 +145,9 @@ async function main() {
 
   console.log(c.bold("\nDone. Next:"));
   console.log("  npm run deploy");
-  console.log(`  Enable Email Routing and Email Sending for ${domain} in the Cloudflare dashboard.`);
+  console.log(
+    `  Enable Email Routing and Email Sending for ${domain} in the Cloudflare dashboard.`,
+  );
   console.log(`  Sign in at https://mail.${domain} with an empty email and the password above.\n`);
 
   rl.close();

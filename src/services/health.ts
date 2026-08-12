@@ -1,6 +1,12 @@
 import type { Db } from "../db/types";
 import { and, desc, eq, gt, sql } from "drizzle-orm";
-import { domains as domainsTable, events, suppressions, webhookDeliveries, webhooks } from "../db/schema";
+import {
+  domains as domainsTable,
+  events,
+  suppressions,
+  webhookDeliveries,
+  webhooks,
+} from "../db/schema";
 import { checkDomain } from "./domains";
 import { listBackups } from "./backup";
 
@@ -131,7 +137,11 @@ async function checkBackups(env: Env): Promise<Finding[]> {
     }
   } catch (err) {
     return [
-      { severity: "bad", area: "backups", detail: `could not list backups: ${(err as Error).message}` },
+      {
+        severity: "bad",
+        area: "backups",
+        detail: `could not list backups: ${(err as Error).message}`,
+      },
     ];
   }
   return [];

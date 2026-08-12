@@ -55,11 +55,7 @@ export async function checkRateLimit(
 }
 
 /** Count one failure against the window, starting a new window if needed. */
-export async function recordFailure(
-  kv: KVNamespace,
-  key: string,
-  limit: Limit,
-): Promise<void> {
+export async function recordFailure(kv: KVNamespace, key: string, limit: Limit): Promise<void> {
   const now = Date.now();
   const raw = await kv.get(`rl:${key}`);
   let bucket: Bucket | null = null;

@@ -19,7 +19,9 @@ import { wrangler } from "./lib.mjs";
 
 const args = process.argv.slice(2);
 const file = args.find((a) => !a.startsWith("--"));
-const database = args.includes("--database") ? args[args.indexOf("--database") + 1] : "mittova-mail";
+const database = args.includes("--database")
+  ? args[args.indexOf("--database") + 1]
+  : "mittova-mail";
 const local = args.includes("--local");
 
 if (!file) {

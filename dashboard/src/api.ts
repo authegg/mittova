@@ -384,8 +384,7 @@ export const api = {
       method: "POST",
       body: body({ domain, zoneId }),
     }),
-  checkDomain: (domain: string) =>
-    request<DomainStatus>(`/domains/${encodeURIComponent(domain)}`),
+  checkDomain: (domain: string) => request<DomainStatus>(`/domains/${encodeURIComponent(domain)}`),
   removeDomain: (domain: string) =>
     request<{ ok: true }>(`/domains/${encodeURIComponent(domain)}`, { method: "DELETE" }),
 
@@ -404,8 +403,7 @@ export const api = {
   updateMailbox: (
     id: string,
     patch: { name?: string; dailySendLimit?: number; replyTo?: string },
-  ) =>
-    request<Mailbox>(`/mailboxes/${id}`, { method: "PATCH", body: body(patch) }),
+  ) => request<Mailbox>(`/mailboxes/${id}`, { method: "PATCH", body: body(patch) }),
   deleteMailbox: (id: string) => request<{ ok: true }>(`/mailboxes/${id}`, { method: "DELETE" }),
 
   messages: (p: {
@@ -475,11 +473,13 @@ export const api = {
 
   apiKeys: () => request<ApiKey[]>("/api-keys"),
   createApiKey: (name: string, scope: "full" | "sending", restrictMailboxId: string | null) =>
-    request<ApiKey>("/api-keys", { method: "POST", body: body({ name, scope, restrictMailboxId }) }),
+    request<ApiKey>("/api-keys", {
+      method: "POST",
+      body: body({ name, scope, restrictMailboxId }),
+    }),
   deleteApiKey: (id: string) => request<{ ok: true }>(`/api-keys/${id}`, { method: "DELETE" }),
 
-  webhooks: () =>
-    request<{ webhooks: Webhook[]; deliveries: WebhookDelivery[] }>("/webhooks"),
+  webhooks: () => request<{ webhooks: Webhook[]; deliveries: WebhookDelivery[] }>("/webhooks"),
   createWebhook: (url: string, eventTypes: string[]) =>
     request<Webhook>("/webhooks", { method: "POST", body: body({ url, eventTypes }) }),
   updateWebhook: (id: string, patch: { enabled?: boolean; eventTypes?: string[] }) =>
@@ -507,7 +507,8 @@ export const api = {
   restoreTemplateVersion: (id: string, versionId: string) =>
     request<Template>(`/templates/${id}/versions/${versionId}/restore`, { method: "POST" }),
 
-  contacts: (q?: string) => request<Contact[]>(`/contacts${q ? `?q=${encodeURIComponent(q)}` : ""}`),
+  contacts: (q?: string) =>
+    request<Contact[]>(`/contacts${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   createContact: (c: { email: string; name: string; company: string; notes: string }) =>
     request<Contact>("/contacts", { method: "POST", body: body(c) }),
   deleteContact: (id: string) => request<{ ok: true }>(`/contacts/${id}`, { method: "DELETE" }),
@@ -534,7 +535,10 @@ export const api = {
 
   suppressions: () => request<Suppression[]>("/suppressions"),
   createSuppression: (email: string, reason: string, detail: string) =>
-    request<Suppression>("/suppressions", { method: "POST", body: body({ email, reason, detail }) }),
+    request<Suppression>("/suppressions", {
+      method: "POST",
+      body: body({ email, reason, detail }),
+    }),
   deleteSuppression: (id: string) =>
     request<{ ok: true }>(`/suppressions/${id}`, { method: "DELETE" }),
 };

@@ -1,6 +1,16 @@
 import { api } from "../api";
 import { useAsync, useToast } from "../hooks";
-import { Badge, Card, EmptyState, TableSkeleton, absoluteTime, compactTime, formatBytes, relativeTime , Pager} from "../components/ui";
+import {
+  Badge,
+  Card,
+  EmptyState,
+  TableSkeleton,
+  absoluteTime,
+  compactTime,
+  formatBytes,
+  relativeTime,
+  Pager,
+} from "../components/ui";
 import { usePaged } from "../hooks-paging";
 
 const TONE: Record<string, "bad" | "warn" | "neutral"> = {
@@ -101,42 +111,42 @@ export default function Audit() {
           />
         ) : (
           <>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ width: 170 }}>Action</th>
-                  <th style={{ width: 230 }}>Actor</th>
-                  <th>Target</th>
-                  <th style={{ width: 180 }} className="num">
-                    When
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {paged.slice.map((e) => (
-                  <tr key={e.id}>
-                    <td>
-                      <Badge tone={TONE[e.action] ?? "neutral"}>{e.action}</Badge>
-                    </td>
-                    <td className="mono small truncate">{e.actorEmail}</td>
-                    <td className="truncate">
-                      <span className="cell-strong">{e.target || "—"}</span>
-                      {e.detail && <span className="small muted"> · {e.detail}</span>}
-                    </td>
-                    <td className="num small muted">{compactTime(e.createdAt)}</td>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ width: 170 }}>Action</th>
+                    <th style={{ width: 230 }}>Actor</th>
+                    <th>Target</th>
+                    <th style={{ width: 180 }} className="num">
+                      When
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <Pager
-            page={paged.page}
-            pageCount={paged.pageCount}
-            total={paged.total}
-            shown={paged.slice.length}
-            onPage={paged.setPage}
-          />
+                </thead>
+                <tbody>
+                  {paged.slice.map((e) => (
+                    <tr key={e.id}>
+                      <td>
+                        <Badge tone={TONE[e.action] ?? "neutral"}>{e.action}</Badge>
+                      </td>
+                      <td className="mono small truncate">{e.actorEmail}</td>
+                      <td className="truncate">
+                        <span className="cell-strong">{e.target || "—"}</span>
+                        {e.detail && <span className="small muted"> · {e.detail}</span>}
+                      </td>
+                      <td className="num small muted">{compactTime(e.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pager
+              page={paged.page}
+              pageCount={paged.pageCount}
+              total={paged.total}
+              shown={paged.slice.length}
+              onPage={paged.setPage}
+            />
           </>
         )}
       </Card>

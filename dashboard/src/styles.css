@@ -1115,8 +1115,7 @@ pre.body-plain {
   padding: 24px;
   /* Soft off-centre light source, well under the 0.04 opacity ceiling. */
   background:
-    radial-gradient(60% 50% at 30% 18%, rgba(26, 25, 23, 0.035), transparent 70%),
-    var(--canvas);
+    radial-gradient(60% 50% at 30% 18%, rgba(26, 25, 23, 0.035), transparent 70%), var(--canvas);
 }
 .gate-card {
   width: 100%;
@@ -1365,7 +1364,9 @@ button.icon-only {
   white-space: nowrap;
   flex: none;
   width: auto;
-  transition: background 180ms var(--ease), border-color 180ms var(--ease);
+  transition:
+    background 180ms var(--ease),
+    border-color 180ms var(--ease);
 }
 .button-like:hover {
   background: var(--surface-sunk);
@@ -2055,12 +2056,26 @@ input.tpl-slug {
   background: color-mix(in srgb, var(--info-ink) 28%, transparent);
 }
 
-.tok-tag { color: var(--info-ink); }
-.tok-attr { color: var(--ok-ink); }
-.tok-string { color: var(--ink-2); }
-.tok-punct { color: var(--ink-3); }
-.tok-comment { color: var(--ink-3); font-style: italic; }
-.tok-var { color: var(--warn-ink); font-weight: 550; }
+.tok-tag {
+  color: var(--info-ink);
+}
+.tok-attr {
+  color: var(--ok-ink);
+}
+.tok-string {
+  color: var(--ink-2);
+}
+.tok-punct {
+  color: var(--ink-3);
+}
+.tok-comment {
+  color: var(--ink-3);
+  font-style: italic;
+}
+.tok-var {
+  color: var(--warn-ink);
+  font-weight: 550;
+}
 
 /* An anchor that has to look and size like a button. */
 a.btn {

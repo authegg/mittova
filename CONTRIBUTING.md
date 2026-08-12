@@ -25,8 +25,12 @@ npm --prefix dashboard run dev   # SPA on :5173, proxying /api
 The one command that has to pass before anything is ready:
 
 ```bash
-npm run check   # typechecks the worker and the dashboard, runs every test
+npm run check   # formatting, typechecks the worker and the dashboard, every test
 ```
+
+Formatting is Prettier's job, so it is never worth arguing about in review. If
+`check` complains about it, run `npm run format` and commit the result. Prose,
+the issue forms and the example wrangler config are left alone deliberately.
 
 ## Three things that will bite you
 

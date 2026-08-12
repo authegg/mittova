@@ -198,10 +198,7 @@ export default function TemplateEditor({
   const [values, setValues] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
 
-  const dirty = useMemo(
-    () => JSON.stringify(form) !== JSON.stringify(baseline),
-    [form, baseline],
-  );
+  const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(baseline), [form, baseline]);
 
   useEffect(() => {
     if (isNew) return;
@@ -328,7 +325,10 @@ export default function TemplateEditor({
               size={16}
             />
           ) : (
-            <span className="tpl-slug mono muted" title="The slug is how the API refers to this template, so it cannot change">
+            <span
+              className="tpl-slug mono muted"
+              title="The slug is how the API refers to this template, so it cannot change"
+            >
               {slug}
             </span>
           )}
@@ -373,9 +373,7 @@ export default function TemplateEditor({
                   >
                     <Icon name="code" size={14} />
                     <span className="navmenu-label">Variables</span>
-                    <span className="navmenu-note">
-                      {variables.length || "none"}
-                    </span>
+                    <span className="navmenu-note">{variables.length || "none"}</span>
                   </button>
                   <button
                     className="navmenu-item"
@@ -471,7 +469,11 @@ export default function TemplateEditor({
           </div>
 
           {tab === "html" ? (
-            <CodeEditor value={bodyHtml} onChange={set("bodyHtml")} placeholder="<table>…</table>" />
+            <CodeEditor
+              value={bodyHtml}
+              onChange={set("bodyHtml")}
+              placeholder="<table>…</table>"
+            />
           ) : (
             <textarea
               className="tpl-plain"
@@ -568,12 +570,5 @@ function PreviewFrame({ html }: { html: string }) {
     return () => clearTimeout(t);
   }, [html]);
 
-  return (
-    <iframe
-      title="Preview"
-      sandbox=""
-      className="tpl-frame"
-      srcDoc={previewDoc(settled)}
-    />
-  );
+  return <iframe title="Preview" sandbox="" className="tpl-frame" srcDoc={previewDoc(settled)} />;
 }

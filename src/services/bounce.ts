@@ -48,7 +48,12 @@ export function detectBounce(envelopeFrom: string, rawText: string): BounceRepor
   const recipients = [
     ...rawText.matchAll(/^Final-Recipient:\s*rfc822;\s*([^\s<>]+@[^\s<>]+)/gim),
     ...rawText.matchAll(/^Original-Recipient:\s*rfc822;\s*([^\s<>]+@[^\s<>]+)/gim),
-  ].map((m) => m[1].trim().toLowerCase().replace(/[.,;]+$/, ""));
+  ].map((m) =>
+    m[1]
+      .trim()
+      .toLowerCase()
+      .replace(/[.,;]+$/, ""),
+  );
 
   const statusMatch = /^Status:\s*([245]\.\d+\.\d+)/im.exec(rawText);
   const diagnostic = /^Diagnostic-Code:\s*(.+)$/im.exec(rawText)?.[1]?.trim() ?? null;

@@ -2,7 +2,6 @@ import type { Db } from "../db/types";
 import { eq } from "drizzle-orm";
 import { apiKeys } from "../db/schema";
 
-
 const PREFIX = "mv_live_";
 
 export async function sha256Hex(input: string): Promise<string> {
@@ -32,7 +31,10 @@ export interface ResolvedKey {
  * the presented value and match on an indexed column, so no secret is compared
  * byte by byte against attacker-controlled input.
  */
-export async function resolveApiKey(db: Db, header: string | undefined): Promise<ResolvedKey | null> {
+export async function resolveApiKey(
+  db: Db,
+  header: string | undefined,
+): Promise<ResolvedKey | null> {
   if (!header?.startsWith("Bearer ")) return null;
   const presented = header.slice(7).trim();
   if (!presented.startsWith(PREFIX)) return null;

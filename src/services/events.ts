@@ -10,7 +10,6 @@ export type EventType =
   | "email.bounced"
   | "email.rejected";
 
-
 /**
  * Structural stand-in for ExecutionContext. Hono's `c.executionCtx` and the
  * email handler's `ctx` are nominally different types across workers-types

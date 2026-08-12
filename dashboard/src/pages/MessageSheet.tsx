@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { api, type Attachment, type MessageEvent, type MessageFull, type ThreadEntry } from "../api";
+import {
+  api,
+  type Attachment,
+  type MessageEvent,
+  type MessageFull,
+  type ThreadEntry,
+} from "../api";
 import { useAsync, useToast } from "../hooks";
 import {
   Badge,
@@ -111,7 +117,9 @@ export default function MessageSheet({
   };
 
   const hasHtml = Boolean(message.bodyHtml);
-  const tabs: Tab[] = hasHtml ? ["rendered", "plain", "source", "headers"] : ["plain", "source", "headers"];
+  const tabs: Tab[] = hasHtml
+    ? ["rendered", "plain", "source", "headers"]
+    : ["plain", "source", "headers"];
   const activeTab = tabs.includes(tab) ? tab : tabs[0];
 
   return (
@@ -235,7 +243,13 @@ export default function MessageSheet({
           <div className="segmented">
             {tabs.map((t) => (
               <button key={t} aria-pressed={activeTab === t} onClick={() => setTab(t)}>
-                {t === "rendered" ? "HTML" : t === "plain" ? "Text" : t === "source" ? "Source" : "Headers"}
+                {t === "rendered"
+                  ? "HTML"
+                  : t === "plain"
+                    ? "Text"
+                    : t === "source"
+                      ? "Source"
+                      : "Headers"}
               </button>
             ))}
           </div>

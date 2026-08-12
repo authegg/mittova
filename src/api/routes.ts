@@ -238,11 +238,9 @@ api.post("/auth/login", async (c) => {
   for (const [key, limit] of keys) {
     const check = await checkRateLimit(c.env.SETTINGS, key, limit);
     if (!check.allowed) {
-      return c.json(
-        { error: "Too many sign-in attempts. Try again later." },
-        429,
-        { "retry-after": String(check.retryAfter) },
-      );
+      return c.json({ error: "Too many sign-in attempts. Try again later." }, 429, {
+        "retry-after": String(check.retryAfter),
+      });
     }
   }
 
@@ -419,7 +417,16 @@ for (const p of ["mailboxes", "messages", "attachments", "send", "stats", "draft
   api.use(`/${p}/*`, requireAuth);
 }
 // Account administration: owners only.
-for (const p of ["domains", "api-keys", "webhooks", "templates", "contacts", "suppressions", "users", "audit"]) {
+for (const p of [
+  "domains",
+  "api-keys",
+  "webhooks",
+  "templates",
+  "contacts",
+  "suppressions",
+  "users",
+  "audit",
+]) {
   api.use(`/${p}`, requireOwner);
   api.use(`/${p}/*`, requireOwner);
 }
@@ -492,7 +499,10 @@ api.post("/mailboxes", requireOwner, async (c) => {
   const domains = (await listDomains(db, c.env, org)).map((d) => d.domain);
   const domain = (body.domain ?? domains[0] ?? "").trim().toLowerCase();
   if (!domains.includes(domain)) {
-    return c.json({ error: `${domain || "That domain"} is not configured on this deployment.` }, 400);
+    return c.json(
+      { error: `${domain || "That domain"} is not configured on this deployment.` },
+      400,
+    );
   }
   const address = `${local}@${domain}`;
 
@@ -735,7 +745,11 @@ api.get("/messages/:id", async (c) => {
 api.post("/messages/:id/unread", async (c) => {
   const scope = c.get("scope");
   const db = drizzle(c.env.DB);
-  const msg = await db.select().from(messages).where(eq(messages.id, c.req.param("id"))).get();
+  const msg = await db
+    .select()
+    .from(messages)
+    .where(eq(messages.id, c.req.param("id")))
+    .get();
   if (!msg || !canUseMailbox(scope, msg.mailboxId)) return c.json({ error: "Not found." }, 404);
 
   if (scope.userId) {
@@ -764,7 +778,11 @@ api.post("/messages/:id/flag", async (c) => {
   const result = await db
     .update(messages)
     .set(patch)
-    .where(permission ? and(eq(messages.id, c.req.param("id")), permission) : eq(messages.id, c.req.param("id")))
+    .where(
+      permission
+        ? and(eq(messages.id, c.req.param("id")), permission)
+        : eq(messages.id, c.req.param("id")),
+    )
     .run();
 
   if (result.meta.changes === 0) return c.json({ error: "Not found." }, 404);
@@ -775,7 +793,11 @@ api.post("/messages/:id/flag", async (c) => {
 api.post("/messages/:id/assign", async (c) => {
   const scope = c.get("scope");
   const db = drizzle(c.env.DB);
-  const msg = await db.select().from(messages).where(eq(messages.id, c.req.param("id"))).get();
+  const msg = await db
+    .select()
+    .from(messages)
+    .where(eq(messages.id, c.req.param("id")))
+    .get();
   if (!msg || !canUseMailbox(scope, msg.mailboxId)) return c.json({ error: "Not found." }, 404);
 
   const { userId } = await c.req.json<{ userId?: string | null }>();
@@ -808,7 +830,11 @@ api.delete("/messages/:id", async (c) => {
 api.get("/messages/:id/raw", async (c) => {
   const scope = c.get("scope");
   const db = drizzle(c.env.DB);
-  const msg = await db.select().from(messages).where(eq(messages.id, c.req.param("id"))).get();
+  const msg = await db
+    .select()
+    .from(messages)
+    .where(eq(messages.id, c.req.param("id")))
+    .get();
   if (!msg || !canUseMailbox(scope, msg.mailboxId)) return c.json({ error: "Not found." }, 404);
   if (!msg.rawKey) return c.json({ error: "No raw source stored for this message." }, 404);
 
@@ -820,12 +846,17 @@ api.get("/messages/:id/raw", async (c) => {
 api.get("/attachments/:id", async (c) => {
   const scope = c.get("scope");
   const db = drizzle(c.env.DB);
-  const att = await db.select().from(attachments).where(eq(attachments.id, c.req.param("id"))).get();
+  const att = await db
+    .select()
+    .from(attachments)
+    .where(eq(attachments.id, c.req.param("id")))
+    .get();
   if (!att) return c.json({ error: "Not found." }, 404);
 
   // Authorise via the parent message's mailbox, not the attachment id alone.
   const parent = await db.select().from(messages).where(eq(messages.id, att.messageId)).get();
-  if (!parent || !canUseMailbox(scope, parent.mailboxId)) return c.json({ error: "Not found." }, 404);
+  if (!parent || !canUseMailbox(scope, parent.mailboxId))
+    return c.json({ error: "Not found." }, 404);
 
   const object = await c.env.STORAGE.get(att.r2Key);
   if (!object) return c.json({ error: "Object missing from R2." }, 404);
@@ -869,8 +900,7 @@ api.post("/send", async (c) => {
         template: body.template as string | undefined,
         variables: body.variables as Record<string, string> | undefined,
         attachments: body.attachments as
-          | { filename: string; content: string; type?: string }[]
-          | undefined,
+          { filename: string; content: string; type?: string }[] | undefined,
       },
       c.executionCtx,
     );
@@ -913,7 +943,9 @@ api.get("/stats", async (c) => {
       outbound: sql<number>`sum(case when ${messages.direction} = 'out' then 1 else 0 end)`,
     })
     .from(messages)
-    .where(permission ? and(permission, gt(messages.createdAt, since)) : gt(messages.createdAt, since))
+    .where(
+      permission ? and(permission, gt(messages.createdAt, since)) : gt(messages.createdAt, since),
+    )
     .groupBy(sql`date(${messages.createdAt} / 1000, 'unixepoch')`)
     .all();
 
@@ -1166,9 +1198,9 @@ api.post("/users", async (c) => {
   // crafted request cannot grant a new account access to another one.
   const ids = await mailboxesInOrg(db, body.mailboxIds ?? [], org);
   if (ids.length > 0) {
-    await db.insert(userMailboxes).values(
-      ids.map((mailboxId) => ({ userId: row.id, mailboxId, createdAt: Date.now() })),
-    );
+    await db
+      .insert(userMailboxes)
+      .values(ids.map((mailboxId) => ({ userId: row.id, mailboxId, createdAt: Date.now() })));
   }
 
   const { passwordHash, passwordSalt, passwordIterations, inviteHash, ...safe } = row;
@@ -1237,9 +1269,9 @@ api.patch("/users/:id", async (c) => {
     const allowed = await mailboxesInOrg(db, body.mailboxIds, target.orgId);
     await db.delete(userMailboxes).where(eq(userMailboxes.userId, id));
     if (allowed.length > 0) {
-      await db.insert(userMailboxes).values(
-        allowed.map((mailboxId) => ({ userId: id, mailboxId, createdAt: Date.now() })),
-      );
+      await db
+        .insert(userMailboxes)
+        .values(allowed.map((mailboxId) => ({ userId: id, mailboxId, createdAt: Date.now() })));
     }
     // The count that landed, not the count that was asked for. An entry saying
     // three were assigned when the tenant boundary refused two describes an
@@ -1362,7 +1394,13 @@ api.post("/orgs", async (c) => {
     .replace(/^-|-$/g, "");
   if (!slug) return c.json({ error: "The name needs at least one letter or number." }, 400);
 
-  if (await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.slug, slug)).get()) {
+  if (
+    await db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.slug, slug))
+      .get()
+  ) {
     return c.json({ error: `An organization called '${trimmed}' already exists.` }, 409);
   }
 
@@ -1401,7 +1439,14 @@ api.patch("/orgs/:id", async (c) => {
   if (Object.keys(patch).length === 0) return c.json({ error: "Nothing to update." }, 400);
 
   await db.update(organizations).set(patch).where(eq(organizations.id, existing.id));
-  audit(db, c.get("scope"), "org.rename", existing.id, Object.keys(patch).join(", "), c.executionCtx);
+  audit(
+    db,
+    c.get("scope"),
+    "org.rename",
+    existing.id,
+    Object.keys(patch).join(", "),
+    c.executionCtx,
+  );
   return c.json({ ok: true });
 });
 
@@ -1415,17 +1460,25 @@ api.patch("/orgs/:id", async (c) => {
 api.delete("/orgs/:id", async (c) => {
   const db = drizzle(c.env.DB);
   const id = c.req.param("id");
-  const existing = await db
-    .select()
-    .from(organizations)
-    .where(eq(organizations.id, id))
-    .get();
+  const existing = await db.select().from(organizations).where(eq(organizations.id, id)).get();
   if (!existing) return c.json({ error: "Not found." }, 404);
 
   const [domainCount, mailboxCount, userCount] = await Promise.all([
-    db.select({ n: sql<number>`count(*)` }).from(domainsTable).where(eq(domainsTable.orgId, id)).get(),
-    db.select({ n: sql<number>`count(*)` }).from(mailboxes).where(eq(mailboxes.orgId, id)).get(),
-    db.select({ n: sql<number>`count(*)` }).from(users).where(eq(users.orgId, id)).get(),
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(domainsTable)
+      .where(eq(domainsTable.orgId, id))
+      .get(),
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(mailboxes)
+      .where(eq(mailboxes.orgId, id))
+      .get(),
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.orgId, id))
+      .get(),
   ]);
 
   const holding = [
@@ -1451,7 +1504,10 @@ api.patch("/orgs/:id", async (c) => {
   const { name } = await c.req.json<{ name?: string }>();
   if (!name?.trim()) return c.json({ error: "A name is required." }, 400);
 
-  await db.update(organizations).set({ name: name.trim() }).where(eq(organizations.id, c.req.param("id")));
+  await db
+    .update(organizations)
+    .set({ name: name.trim() })
+    .where(eq(organizations.id, c.req.param("id")));
   audit(db, c.get("scope"), "org.rename", c.req.param("id"), name.trim(), c.executionCtx);
   return c.json({ ok: true });
 });
@@ -1532,7 +1588,10 @@ api.post("/domains", async (c) => {
   const scope = c.get("scope");
   const db = drizzle(c.env.DB);
   const body = await c.req.json<{ domain?: string; zoneId?: string }>();
-  const domain = (body.domain ?? "").trim().toLowerCase().replace(/^https?:\/\//, "");
+  const domain = (body.domain ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "");
 
   if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(domain)) {
     return c.json({ error: "Enter a bare domain, for example example.com." }, 400);
@@ -1567,9 +1626,18 @@ api.post("/domains", async (c) => {
     .filter((r) => r.service === "routing")
     .every((r) => r.status === "ok");
 
-  audit(db, c.get("scope"), "domain.add", domain, added.zoneId ? "with zone" : "no zone", c.executionCtx);
+  audit(
+    db,
+    c.get("scope"),
+    "domain.add",
+    domain,
+    added.zoneId ? "with zone" : "no zone",
+    c.executionCtx,
+  );
   // A newly onboarded domain changes the DNS picture; drop the cached checks.
-  await c.env.SETTINGS.delete(`dns:status:${(await listDomains(db, c.env)).map((d) => d.domain).join(",")}`);
+  await c.env.SETTINGS.delete(
+    `dns:status:${(await listDomains(db, c.env)).map((d) => d.domain).join(",")}`,
+  );
   return c.json({ ...added, sending, receiving }, 201);
 });
 
@@ -2148,7 +2216,12 @@ api.post("/contacts", async (c) => {
   if (!org) return c.json(PICK_ORG, 400);
 
   const db = drizzle(c.env.DB);
-  const body = await c.req.json<{ email?: string; name?: string; company?: string; notes?: string }>();
+  const body = await c.req.json<{
+    email?: string;
+    name?: string;
+    company?: string;
+    notes?: string;
+  }>();
   const email = (body.email ?? "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return c.json({ error: "A valid email address is required." }, 400);
