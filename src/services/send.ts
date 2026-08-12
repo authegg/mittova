@@ -9,6 +9,7 @@ import {
   attachments,
 } from "../db/schema";
 import { sanitiseEmailHtml, htmlToText, wrapForEmail } from "./html";
+import { isDemo } from "./demo";
 import { suppress } from "./bounce";
 import { attachmentKey } from "./storage";
 import { resolveThreadId } from "../email/ingest";
@@ -361,6 +362,25 @@ export async function sendEmail(
       `attachments total ${(totalBytes / 1024 / 1024).toFixed(1)} MB, limit is 20 MB`,
       413,
       "E_CONTENT_TOO_LARGE",
+    );
+  }
+
+  /**
+   * The public demo does not send mail, and this is the one place that decides
+   * it — deliberately here, adjacent to the call, rather than at the top of the
+   * function: every path that reaches the wire passes through this line, so a
+   * future caller that skips the validation above still cannot get past it.
+   *
+   * The demo's wrangler.jsonc also omits the `send_email` binding, so `env.EMAIL`
+   * does not exist there at all. Two independent stops: the flag could be wrong
+   * and nothing would leave, and this check could be deleted and nothing would
+   * leave. A public inbox that can emit mail is a spam relay with a nice UI.
+   */
+  if (isDemo(env)) {
+    throw new SendError(
+      "Sending is disabled on the demo. Everything else works — this is the one thing that would leave the building.",
+      403,
+      "E_DEMO_MODE",
     );
   }
 

@@ -34,6 +34,7 @@ import {
   type Scope,
 } from "../auth";
 import { sendEmail, SendError } from "../services/send";
+import { isDemo } from "../services/demo";
 import {
   addDomain,
   checkDomain,
@@ -280,6 +281,16 @@ api.get("/auth/me", async (c) => {
       signature: scope.signature,
     },
     routingAutomated: routingConfigured(c.env),
+    /**
+     * Present only on the public demo, and the only thing that tells the
+     * dashboard it is one. Null everywhere else, so no real deployment can
+     * render a banner claiming its data is fabricated.
+     *
+     * The password here is a var the demo's own config sets, not the
+     * ADMIN_PASSWORD secret it happens to match — see src/env.d.ts for why the
+     * secret is deliberately not the thing being served.
+     */
+    demo: isDemo(c.env) ? { password: c.env.DEMO_PASSWORD ?? "" } : null,
   });
 });
 
@@ -1115,6 +1126,20 @@ api.get("/audit", async (c) => {
 api.get("/backups", async (c) => c.json(await listBackups(c.env)));
 
 api.post("/backups", async (c) => {
+  /**
+   * Not on the demo, where "platform administrator" is every visitor.
+   *
+   * This route is the one thing a visitor can create that does not live in D1,
+   * so the hourly reset — which wipes tables — never cleared it, and there is no
+   * route to delete a backup once written. A public button that appends to R2
+   * and can never be undone is a storage bill waiting for somebody bored.
+   * `resetDemoData` now sweeps the prefix as well, so this fails twice like the
+   * other two demo guards.
+   */
+  if (isDemo(c.env)) {
+    return c.json({ error: "Backups are disabled on the demo." }, 403);
+  }
+
   const scope = c.get("scope");
   const db = drizzle(c.env.DB);
   const result = await runBackup(c.env);

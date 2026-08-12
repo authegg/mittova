@@ -7,6 +7,7 @@ import { pruneBackups, runBackup } from "./services/backup";
 import { alertBody, runHealthCheck, type HealthReport } from "./services/health";
 import { mailboxes } from "./db/schema";
 import { sendEmail } from "./services/send";
+import { DEMO_RESET_CRON, isDemo, resetDemoData } from "./services/demo";
 import type { Db } from "./db/types";
 
 /**
@@ -73,9 +74,46 @@ export default {
     // would be waste; checking health once a day would let a broken domain sit
     // broken all day.
     const nightly = event.cron === "17 3 * * *";
+    const demo = isDemo(env);
+
+    /**
+     * The public demo's only scheduled job: wipe itself back to the seed.
+     *
+     * Both halves of this condition matter. Matching the cron exactly keeps it
+     * off the two schedules a real deployment runs, and `demo` keeps it off a
+     * real deployment entirely — including one that happens to have added an
+     * hourly trigger of its own. `resetDemoData` checks the flag again for
+     * itself; this is not the only thing standing between a production database
+     * and a full wipe, and it should not be.
+     *
+     * Nothing else runs on the demo: the health check exists to notice a broken
+     * domain or a lapsed DNS record, and the demo has neither.
+     */
+    if (demo) {
+      // Returning for *every* cron, not just the reset's, is what makes the
+      // claim above true. Guarding only the reset left the health check and its
+      // alert mail reachable on the demo from any other schedule — harmless
+      // today only because the demo declares one cron, which is a property of a
+      // config file rather than of this code.
+      if (event.cron === DEMO_RESET_CRON) {
+        ctx.waitUntil(
+          resetDemoData(env)
+            .then((r) =>
+              console.log(
+                `demo reset — ${r.statements} statements, ${r.rawObjects} raw, ${r.backupsSwept} backups swept`,
+              ),
+            )
+            .catch((err) => console.error("demo reset failed", err)),
+        );
+      }
+      return;
+    }
 
     ctx.waitUntil(
       (async () => {
+        // No `&& !demo` here: the demo returned above, for every cron it could
+        // ever be given. A second check would read as a guard while being
+        // unreachable, which is how a comment starts lying.
         if (nightly) {
           try {
             const result = await runBackup(env);

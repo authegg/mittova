@@ -5,7 +5,15 @@ dashboard/dist/
 # Local secrets and generated config — never commit these.
 .dev.vars
 .dev.vars.*
-wrangler.jsonc
+# Anchored to the root on purpose. An unanchored `wrangler.jsonc` also matches
+# site/wrangler.jsonc, which IS committed — it is a static site with no account
+# id, no zone id and no bindings, and Workers Builds cannot deploy without it.
+# Ignoring it silently produced a deploy that failed for no visible reason.
+/wrangler.jsonc
+# The demo's config, once filled in, carries the same account and resource ids,
+# which is exactly why the demo is deployed by hand instead. Its committed
+# template is wrangler.demo.example.jsonc.
+/wrangler.demo.jsonc
 worker-configuration.d.ts
 .wrangler/
 

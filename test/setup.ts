@@ -46,4 +46,11 @@ beforeEach(async () => {
   // make an isolation test pass for the wrong reason.
   const keys = await env.SETTINGS.list();
   for (const k of keys.keys) await env.SETTINGS.delete(k.name);
+
+  // R2 holds raw MIME, attachments and backups. Left in place it makes any test
+  // that counts objects depend on what ran before it — a backup written by one
+  // test was still there for the next, which is an order-dependent pass waiting
+  // to become a confusing failure.
+  const objects = await env.STORAGE.list();
+  for (const o of objects.objects) await env.STORAGE.delete(o.key);
 });

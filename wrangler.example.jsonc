@@ -15,6 +15,11 @@
 
   "observability": { "enabled": true },
 
+  // The demo seed is one .sql file read by both the Worker and
+  // scripts/seed-demo.mjs, so neither can drift from the other. This inlines it
+  // into the bundle as a string.
+  "rules": [{ "type": "Text", "globs": ["**/*.sql"] }],
+
   // Single hostname for the mail UI — no workers.dev/preview alias.
   "workers_dev": false,
   "preview_urls": false,
@@ -60,5 +65,11 @@
     // Enables automatic Email Routing rule creation, together with the
     // CF_API_TOKEN secret. Leave blank to manage routing rules by hand.
     "CF_ZONE_ID": "<YOUR_ZONE_ID>"
+
+    // DEMO_MODE is deliberately absent. It belongs to the public demo
+    // (wrangler.demo.example.jsonc) and to nothing else: set to "1" it disables
+    // sending outright and wipes the whole database back to the seed every
+    // hour. A production template is the last place that should invite anyone
+    // to try it.
   }
 }

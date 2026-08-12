@@ -1,0 +1,117 @@
+/**
+ * The public demo at demo.mittova.com.
+ *
+ * Copy to wrangler.demo.jsonc, fill in the ids, and deploy from a checkout that
+ * has credentials:
+ *
+ *   npm run build
+ *   npx wrangler deploy --config wrangler.demo.jsonc
+ *
+ * wrangler.demo.jsonc is gitignored for the same reason wrangler.jsonc is: the
+ * moment it is filled in it carries an account id and D1, R2 and KV resource
+ * ids. Nothing in this repository may contain those, which is also why the demo
+ * is NOT connected to Workers Builds — automatic deployment would require this
+ * file to be committed. A demo changes rarely, so deploying it by hand costs
+ * almost nothing and keeps the ids out of a public tree.
+ *
+ * This deployment must never send or receive mail, and four independent things
+ * are arranged so that it cannot:
+ *
+ *   1. DEMO_MODE is "1", which makes sendEmail refuse before it reaches the wire.
+ *   2. There is no `send_email` binding below, so there is no env.EMAIL to call
+ *      even if the flag were wrong.
+ *   3. Email Routing is never enabled on mittova.com, so nothing is delivered
+ *      inbound. A public inbox anyone can email is a moderation liability, and
+ *      turning routing on is a deliberate dashboard step that nobody should take.
+ *   4. No CF_API_TOKEN secret is set, so domain onboarding cannot reach the real
+ *      Cloudflare API and cannot enable anything on its own.
+ *
+ * Use resources created FOR the demo. Pointing this at the resources a real
+ * deployment uses would wipe them on the hour.
+ */
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mittova-demo",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "<YOUR_CLOUDFLARE_ACCOUNT_ID>",
+
+  "observability": { "enabled": true },
+
+  // Inlines src/services/demo-seed.sql into the bundle, which is what the
+  // hourly reset executes.
+  "rules": [{ "type": "Text", "globs": ["**/*.sql"] }],
+
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "demo.mittova.com", "custom_domain": true }],
+
+  // The demo's only schedule, and it must stay the only one. This value has to
+  // match DEMO_RESET_CRON in src/services/demo.ts; the scheduled handler
+  // dispatches by comparing event.cron, so a different expression here means the
+  // demo silently stops resetting.
+  //
+  // There is deliberately no nightly backup trigger: the handler skips backups
+  // under DEMO_MODE anyway, and fabricated rows are not worth writing to R2.
+  "triggers": { "crons": ["0 * * * *"] },
+
+  "assets": {
+    "directory": "./dashboard/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+
+  // Throwaway resources, created for the demo and holding nothing real. The
+  // hourly reset deletes every row in this database.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mittova-demo",
+      "database_id": "<YOUR_DEMO_D1_DATABASE_ID>",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "r2_buckets": [{ "binding": "STORAGE", "bucket_name": "mittova-demo" }],
+
+  "kv_namespaces": [{ "binding": "SETTINGS", "id": "<YOUR_DEMO_KV_NAMESPACE_ID>" }],
+
+  // No "send_email" binding, on purpose. This is the second of the two stops on
+  // sending, and it is independent of the code: with no binding there is no
+  // env.EMAIL, so a message cannot leave even if DEMO_MODE were wrong. Do not
+  // add it back to "make the composer work" — the composer refusing is the
+  // feature.
+
+  "vars": {
+    "APP_NAME": "Mittova",
+    // The demo's fabricated domain. It is never a real domain and no DNS,
+    // Email Routing or Email Sending is ever configured for it.
+    "MAIL_DOMAIN": "northwind.example",
+    "WORKER_NAME": "mittova-demo",
+    "ADMIN_EMAIL": "admin",
+    // Empty: domain onboarding must not reach the Cloudflare API from here.
+    "CF_ZONE_ID": "",
+    // "1", exactly, is what turns the demo on: sending is refused and the
+    // database is reset hourly. Any other value means off, which is the safe
+    // direction — see src/services/demo.ts.
+    "DEMO_MODE": "1",
+    // Published on the demo's own sign-in screen so visitors can get in, and
+    // therefore public by design. Set the ADMIN_PASSWORD secret to this same
+    // value. It is a var rather than the secret itself so that no deployment
+    // which is not the demo can ever serve its administrator password.
+    "DEMO_PASSWORD": "demo"
+  }
+
+  // Secrets, set with `wrangler secret put --config wrangler.demo.jsonc`:
+  //
+  //   ADMIN_PASSWORD   the break-glass sign-in, published on the demo page
+  //                    itself so visitors can get in. Choose something that is
+  //                    obviously a demo password and is used nowhere else.
+  //
+  // Deliberately NOT set:
+  //
+  //   CF_API_TOKEN     the demo has no business talking to the Cloudflare API.
+  //   ALERT_EMAIL      health alerts are mail, and the demo does not send mail.
+}

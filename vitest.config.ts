@@ -21,10 +21,29 @@ const migrations = await readD1Migrations(path.join(import.meta.dirname, "migrat
  * unique indexes the isolation rules lean on. Every one of those has already
  * cost this project a production bug.
  */
+/**
+ * Teach the node side to read a `.sql` import as text.
+ *
+ * The Worker gets this from the `Text` rule in wrangler.jsonc, and the worker
+ * test project from miniflare's `modulesRules`. The unit project has neither, so
+ * anything it imports that transitively reaches the demo seed — `send.ts` does,
+ * for the DEMO_MODE check — arrives at Vite's JavaScript parser and fails on the
+ * first apostrophe in the SQL. Loading it here rather than restructuring the
+ * modules keeps the three environments agreeing about what a `.sql` import is.
+ */
+const sqlAsText = {
+  name: "sql-as-text",
+  transform(code: string, id: string) {
+    if (!id.endsWith(".sql")) return null;
+    return { code: `export default ${JSON.stringify(code)};`, map: null };
+  },
+};
+
 export default defineConfig({
   test: {
     projects: [
       {
+        plugins: [sqlAsText],
         test: {
           name: "unit",
           include: ["src/**/*.test.ts", "dashboard/src/**/*.test.ts"],
@@ -38,6 +57,7 @@ export default defineConfig({
             miniflare: {
               compatibilityDate: "2026-07-01",
               compatibilityFlags: ["nodejs_compat"],
+              modulesRules: [{ type: "Text", include: ["**/*.sql"] }],
               d1Databases: ["DB"],
               kvNamespaces: ["SETTINGS"],
               r2Buckets: ["STORAGE"],
