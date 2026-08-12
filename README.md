@@ -34,8 +34,8 @@ your own Cloudflare resources.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/screenshot-dark.png">
-    <img src=".github/assets/screenshot-light.png" alt="The Mittova inbox, listing received mail across three mailboxes with SPF, DKIM and DMARC results on each message" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshot-dark.png">
+    <img src="assets/screenshot-light.png" alt="The Mittova inbox, listing received mail across three mailboxes with SPF, DKIM and DMARC results on each message" width="100%">
   </picture>
 </p>
 
@@ -63,30 +63,30 @@ Reading a message. Authentication results are shown per message, the raw source 
 click away, and remote HTML renders in a sandboxed iframe so it cannot script the dashboard.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/message-dark.png">
-  <img src=".github/assets/message-light.png" alt="A message open in the reading pane, showing From, To, Date, Size and Message-ID, SPF DKIM and DMARC all passing, and the formatted body" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/message-dark.png">
+  <img src="assets/message-light.png" alt="A message open in the reading pane, showing From, To, Date, Size and Message-ID, SPF DKIM and DMARC all passing, and the formatted body" width="100%">
 </picture>
 
 Users and roles. Members see only the mailboxes assigned to them; owners manage the organization.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/users-dark.png">
-  <img src=".github/assets/users-light.png" alt="The users table listing owners and members with the mailboxes each can see and when they last signed in" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/users-dark.png">
+  <img src="assets/users-light.png" alt="The users table listing owners and members with the mailboxes each can see and when they last signed in" width="100%">
 </picture>
 
 Templates, reusable from the composer or by passing `template` to the send API.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/templates-dark.png">
-  <img src=".github/assets/templates-light.png" alt="The template gallery, three templates with live previews and variable placeholders" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/templates-dark.png">
+  <img src="assets/templates-light.png" alt="The template gallery, three templates with live previews and variable placeholders" width="100%">
 </picture>
 
 API keys. Restricted keys may send as exactly one mailbox; only a SHA-256 hash is stored, so the
 plaintext is shown once and never again.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/keys-dark.png">
-  <img src=".github/assets/keys-light.png" alt="The API keys table showing key previews, scope, the mailbox each is restricted to, and last use" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/keys-dark.png">
+  <img src="assets/keys-light.png" alt="The API keys table showing key previews, scope, the mailbox each is restricted to, and last use" width="100%">
 </picture>
 
 </details>

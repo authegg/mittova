@@ -15,4 +15,4 @@ migrations/
 .github/
 *.jsonc
 
-.github/assets/
+assets/
