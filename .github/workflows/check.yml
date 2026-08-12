@@ -30,6 +30,7 @@ jobs:
 
       - run: npm ci
       - run: npm --prefix dashboard ci
+      - run: npm --prefix site ci
 
       # Env comes from worker-configuration.d.ts, which wrangler generates from
       # wrangler.jsonc — and both are gitignored, because the real one holds
@@ -41,10 +42,16 @@ jobs:
       # to run `npm run format` rather than having their branch edited.
       - run: npx prettier --check .
 
-      # Typecheck both halves: the Worker and the dashboard are separate
+      # The comparison table exists once, in site/content/comparison.json, and
+      # the README's copy is generated from it. This is what stops the two
+      # drifting: an edit to either without regenerating fails here.
+      - run: node scripts/comparison.mjs --check
+
+      # Typecheck all three: the Worker, the dashboard and the site are separate
       # tsconfigs, and only the Worker's is covered by the root command.
       - run: npx tsc --noEmit
       - run: npm --prefix dashboard run typecheck
+      - run: npm --prefix site run typecheck
 
       # Unit tests, plus the tenant-boundary tests that run inside workerd
       # against a real D1 built from migrations/. That build is also the
@@ -54,7 +61,13 @@ jobs:
       # would need the gitignored wrangler.jsonc to do so.
       - run: npx vitest run
 
+      # Both builds, because both ship. `npm run check` only typechecks them —
+      # a build is slower and belongs in CI rather than in the loop a
+      # contributor runs before every commit — but the site is deployed straight
+      # from main by Workers Builds, so a site build that fails here would
+      # otherwise fail on the deployment instead.
       - run: npm run build
+      - run: npm --prefix site run build
 
   # Catches the failure mode that has actually happened here: a generated
   # migration that recreates a table, which D1 turns into a cascading delete

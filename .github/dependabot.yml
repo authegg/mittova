@@ -1,11 +1,16 @@
 version: 2
 
-# Three ecosystems, because this repository is three dependency trees: the
-# Worker at the root, the dashboard beside it, and the actions that CI pins.
-# Grouping the non-major updates keeps the pull request count survivable while
-# still letting a major arrive on its own, where it can be read properly — the
-# drizzle-orm 0.44 to 0.45 bump was a security fix that also crossed a major,
-# and that is exactly the kind that should not be batched with routine noise.
+# Four ecosystems, because this repository is four dependency trees: the Worker
+# at the root, the dashboard and the marketing site beside it, and the actions
+# that CI pins. Grouping the non-major updates keeps the pull request count
+# survivable while still letting a major arrive on its own, where it can be read
+# properly — the drizzle-orm 0.44 to 0.45 bump was a security fix that also
+# crossed a major, and that is exactly the kind that should not be batched with
+# routine noise.
+#
+# None of these is auto-merged, and that is deliberate now that site/ deploys
+# itself: Workers Builds ships whatever lands on main, so an auto-merged bump
+# would be an unreviewed deployment to mittova.com.
 updates:
   - package-ecosystem: npm
     directory: /
@@ -25,6 +30,17 @@ updates:
     open-pull-requests-limit: 5
     groups:
       dashboard-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directory: /site
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      site-minor-and-patch:
         update-types:
           - minor
           - patch

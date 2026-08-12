@@ -2,8 +2,10 @@
 node_modules/
 dist/
 dashboard/dist/
+site/dist/
 package-lock.json
 dashboard/package-lock.json
+site/package-lock.json
 worker-configuration.d.ts
 migrations/
 
