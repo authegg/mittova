@@ -1,0 +1,49 @@
+{
+  "caption": "How Mittova compares",
+  "columns": [
+    { "name": "Mittova", "note": "", "highlight": true },
+    { "name": "Hosted API", "note": "(Resend, Postmark)", "highlight": false },
+    { "name": "Classic self-hosted", "note": "(Mailcow, Mail-in-a-Box)", "highlight": false },
+    { "name": "Email Routing", "note": "on its own", "highlight": false }
+  ],
+  "rows": [
+    {
+      "label": "Where your mail lives",
+      "cells": [
+        "Your Cloudflare account",
+        "The vendor's infrastructure",
+        "Your server",
+        "Nowhere — it is forwarded"
+      ]
+    },
+    {
+      "label": "Server to run and patch",
+      "cells": ["None", "None", "A VPS you own", "None"]
+    },
+    {
+      "label": "IP reputation",
+      "cells": ["Cloudflare's", "The vendor's", "Yours to build and defend", "Cloudflare's"]
+    },
+    {
+      "label": "Read and reply to mail",
+      "cells": ["Dashboard, with threading", "Not offered", "Yes, full mail stack", "No"]
+    },
+    {
+      "label": "Programmatic send",
+      "cells": ["`POST /api/v1/emails`", "Yes", "Your own SMTP", "No"]
+    },
+    {
+      "label": "Several clients, one deployment",
+      "cells": ["Organizations", "One account each", "One server each", "No"]
+    },
+    {
+      "label": "Runs your own code on inbound",
+      "cells": [
+        "Yes, it is a Worker",
+        "Webhooks only",
+        "Yes, with plumbing",
+        "Yes, but nothing is stored"
+      ]
+    }
+  ]
+}

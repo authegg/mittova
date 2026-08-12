@@ -14,6 +14,11 @@
 </p>
 
 <p align="center">
+  <a href="https://mittova.com"><b>mittova.com</b></a> &nbsp;·&nbsp;
+  <a href="https://demo.mittova.com"><b>Live demo</b></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/authegg/mittova/actions/workflows/check.yml"><img src="https://img.shields.io/github/actions/workflow/status/authegg/mittova/check.yml?branch=main&style=flat-square&label=check&labelColor=1a1917&color=346538" alt="check"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-1a1917?style=flat-square&labelColor=1a1917" alt="MIT licence"></a>
   <img src="https://img.shields.io/badge/runs%20on-Cloudflare%20Workers-1a1917?style=flat-square&labelColor=1a1917" alt="Runs on Cloudflare Workers">
@@ -28,9 +33,13 @@ is sent through Cloudflare Email Service — DKIM-signed by your own domain.
 There is no shared multi-tenant service in the middle. One deployment, one account, your data in
 your own Cloudflare resources.
 
-> Cloudflare Email Service is in **open beta**. Receiving through Email Routing is generally
+> Cloudflare **Email Sending is in beta**. Receiving through Email Routing is generally
 > available; sending depends on a beta product, so treat it accordingly before putting a business
 > on it.
+
+**[Try the demo](https://demo.mittova.com)** — sign in with an empty email field and the password
+`demo`. It resets on the hour, every address and message in it is fabricated, and sending is
+disabled: it is the real dashboard against throwaway data, not a video.
 
 <p align="center">
   <picture>
@@ -97,6 +106,8 @@ Mittova sits in a gap. Hosted APIs send well but hold your mail and do not let y
 Classic self-hosted mail servers give you everything and a server to defend. Email Routing on its
 own forwards mail but stores nothing.
 
+<!-- comparison:start -->
+
 |  | **Mittova** | Hosted API<br>(Resend, Postmark) | Classic self-hosted<br>(Mailcow, Mail-in-a-Box) | Email Routing<br>on its own |
 |---|---|---|---|---|
 | Where your mail lives | Your Cloudflare account | The vendor's infrastructure | Your server | Nowhere — it is forwarded |
@@ -106,6 +117,8 @@ own forwards mail but stores nothing.
 | Programmatic send | `POST /api/v1/emails` | Yes | Your own SMTP | No |
 | Several clients, one deployment | Organizations | One account each | One server each | No |
 | Runs your own code on inbound | Yes, it is a Worker | Webhooks only | Yes, with plumbing | Yes, but nothing is stored |
+
+<!-- comparison:end -->
 
 The trade is deliberate: you are choosing to depend on Cloudflare rather than on a vendor or on a
 server. If that dependency is unacceptable, a classic mail server is the honest answer.
@@ -311,7 +324,8 @@ install is unaffected: it gets the whole baseline.
 - **An organization is not a separate database.** Isolation is enforced in the query layer against
   one D1 instance, which is the right trade for tenants you operate yourself. Clients who require
   their data to be physically separate want separate deployments.
-- Email Sending is in open beta at the time of writing.
+- Email Sending is in beta at the time of writing. Email Routing, which is the receiving half, is
+  generally available.
 
 ## Contributing
 
