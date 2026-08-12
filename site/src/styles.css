@@ -911,3 +911,65 @@ footer nav {
     grid-column: 1 / -1;
   }
 }
+
+/* -------------------------------------------------- hero shot legibility --- */
+
+/*
+   The hero screenshot is a 1280px-wide dashboard. Scaled to fit a phone it is
+   1100 pixels of UI in 340, which is not a small screenshot — it is a grey
+   texture. Below 900px it is therefore shown as a CROP at close to natural
+   scale: the top-left corner, which is the masthead, the "Inbox" heading and
+   the first rows, all of which are legible and are the part worth seeing.
+
+   The container clips; the image is deliberately wider than it so there is
+   something to clip. `object-position: left top` keeps the crop anchored to the
+   corner rather than drifting as the viewport changes.
+*/
+@media (max-width: 899px) {
+  .hero-shot .shot {
+    /* Tall enough for the heading, the filter row and several messages. */
+    aspect-ratio: 3 / 4;
+  }
+
+  .hero-shot .shot img {
+    width: auto;
+    max-width: none;
+    /* ~1.7x. Enough to make the UI text readable while still showing the
+       toolbar and the first few messages, which is what makes it look like a
+       mail client rather than a header. */
+    height: 135%;
+    object-fit: cover;
+    object-position: left top;
+  }
+}
+
+/*
+   Above the two-column breakpoint the shot shares the fold with the text, so it
+   only gets about half the container. Letting it run past the right edge of the
+   container to the viewport edge buys back the width that makes it readable,
+   which is the whole reason it is up here rather than in the gallery below.
+*/
+@media (min-width: 1100px) {
+  .hero .wrap {
+    /* The shot's column no longer has to fit inside the centred measure. */
+    overflow: visible;
+  }
+
+  .hero-shot {
+    /* Grows rightward into the page gutter and beyond, clipped by the section. */
+    width: calc(100% + max(0px, (100vw - var(--col)) / 2) + var(--gutter));
+    max-width: none;
+  }
+
+  .hero-shot .shot {
+    /* Squared off on the right, because that edge is now off-page. */
+    border-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
+/* The section clips the overhang so the page never scrolls sideways. */
+.hero {
+  overflow-x: clip;
+}
