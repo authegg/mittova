@@ -51,11 +51,17 @@ function screenshots(): Plugin {
 
   const prepare = () =>
     (ready ??= (async () => {
-      for (const shot of SHOTS) {
-        for (const basename of [shot.light, shot.dark]) {
-          rendered.set(basename, await render(basename));
-        }
-      }
+      // All ten plates at once. Only the light one gets a PNG fallback — the
+      // <img> inside a <picture> is always built from the light variants, so a
+      // dark PNG is bytes nothing can request.
+      const jobs = SHOTS.flatMap((shot) => [
+        { basename: shot.light, withFallback: true },
+        { basename: shot.dark, withFallback: false },
+      ]);
+      const done = await Promise.all(
+        jobs.map(async (j) => [j.basename, await render(j.basename, j.withFallback)] as const),
+      );
+      for (const [basename, result] of done) rendered.set(basename, result);
     })());
 
   /** One themed pair of <source> elements plus the shared <img> fallback. */

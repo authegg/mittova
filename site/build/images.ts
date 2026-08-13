@@ -11,9 +11,12 @@
  * wider than ~1120 CSS pixels, so shipping them untouched would be sending
  * roughly ten times the bytes anybody needs.
  *
- * Encoding is expensive — AVIF especially — so results are cached under
- * node_modules/.cache, keyed by the source's size and mtime. A warm build does
- * no image work at all.
+ * Encoding is expensive — AVIF especially — so results are cached, keyed by the
+ * source's size and mtime. A warm build does no image work at all.
+ *
+ * The cache deliberately sits in site/.cache rather than node_modules/.cache:
+ * `npm ci` deletes node_modules, so CI and every Workers Builds deploy started
+ * cold and paid the full encode every single time.
  */
 
 import { createHash } from "node:crypto";
@@ -27,7 +30,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 /** Shared with the README. Read-only, always. */
 export const ASSETS = join(here, "..", "..", "assets");
 
-const CACHE = join(here, "..", "node_modules", ".cache", "mittova-site-images");
+const CACHE = join(here, "..", ".cache", "images");
 
 /**
  * Rendered widths. The page column caps at 1120px, so 1280 covers a 1x desktop
@@ -101,8 +104,15 @@ async function encode(src: string, width: number, format: Variant["format"]): Pr
   return pipeline.png({ compressionLevel: 9, palette: true, quality: 88 }).toBuffer();
 }
 
-/** Resize and re-encode one source PNG into every variant the page can use. */
-export async function render(basename: string): Promise<Rendered> {
+/**
+ * Resize and re-encode one source PNG into every variant the page can use.
+ *
+ * `withFallback` exists because only one plate of each pair needs the PNG: a
+ * `<picture>` carries a single `<img>`, and it is always built from the light
+ * variants. Rendering it for the dark plate too emitted five files totalling
+ * 165 KB that nothing on the page could ever request.
+ */
+export async function render(basename: string, withFallback = true): Promise<Rendered> {
   const src = join(ASSETS, `${basename}.png`);
   const meta = await sharp(src).metadata();
   const id = stamp(src);
@@ -112,20 +122,25 @@ export async function render(basename: string): Promise<Rendered> {
       { width, format: "avif" as const },
       { width, format: "webp" as const },
     ]),
-    { width: FALLBACK_WIDTH, format: "png" as const },
+    ...(withFallback ? [{ width: FALLBACK_WIDTH, format: "png" as const }] : []),
   ];
 
-  const variants: Variant[] = [];
-  for (const { width, format } of wanted) {
-    const key = `${basename}.${id}.${width}.${format}`;
-    const source = await cached(key, () => encode(src, width, format));
-    variants.push({
-      fileName: `img/${basename}-${width}.${id.slice(0, 8)}.${format}`,
-      source,
-      width,
-      format,
-    });
-  }
+  // Concurrently: these encodes are independent, and sharp releases the loop
+  // while libvips works on its own thread pool. Awaiting them one at a time made
+  // a cold build take 48s of wall clock for 48s of CPU on a sixteen-core
+  // machine — every CI run and every deploy paid it, because `npm ci` wipes the
+  // cache these results live in.
+  const variants = await Promise.all(
+    wanted.map(async ({ width, format }): Promise<Variant> => {
+      const key = `${basename}.${id}.${width}.${format}`;
+      return {
+        fileName: `img/${basename}-${width}.${id.slice(0, 8)}.${format}`,
+        source: await cached(key, () => encode(src, width, format)),
+        width,
+        format,
+      };
+    }),
+  );
 
   return { width: meta.width ?? 0, height: meta.height ?? 0, variants };
 }

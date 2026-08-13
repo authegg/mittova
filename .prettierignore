@@ -3,6 +3,7 @@ node_modules/
 dist/
 dashboard/dist/
 site/dist/
+site/.cache/
 package-lock.json
 dashboard/package-lock.json
 site/package-lock.json

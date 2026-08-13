@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-export const SOURCE = join(here, "..", "content", "comparison.json");
+const SOURCE = join(here, "..", "content", "comparison.json");
 
 type Column = { name: string; note: string; highlight: boolean };
 type Row = { label: string; cells: string[] };
@@ -34,7 +34,7 @@ function escape(text: string): string {
  * backticks is escaped as text; the span itself becomes a <code>, with its
  * contents escaped too.
  */
-export function inline(text: string): string {
+function inline(text: string): string {
   let out = "";
   let rest = text;
   for (;;) {

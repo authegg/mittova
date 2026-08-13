@@ -399,6 +399,9 @@ section:first-of-type {
 .hero {
   padding-top: clamp(28px, 5.5vw, 68px);
   padding-bottom: clamp(48px, 6vw, 88px);
+  /* Clips the wide-screen shot where it runs past the container, so the
+     overhang never turns into a horizontal scrollbar. */
+  overflow-x: clip;
 }
 
 .hero .eyebrow {
@@ -877,15 +880,26 @@ footer nav {
    was, which is the one that was actually designed.
 */
 @media (min-width: 1100px) {
-  /* The grid goes on the inner .wrap, not on .hero. .hero is the full-bleed
+  /*
+     The wide-screen hero: text on the left, the product shot beside it.
+
+     The grid goes on the inner .wrap, not on .hero — .hero is the full-bleed
      section and its only child is the centred .wrap, so making .hero the grid
-     produced one grid item in column one and an empty column two — the exact
-     void this is meant to remove, only narrower. */
+     produced one grid item in column one and an empty column two, which is the
+     exact void this is meant to remove, only narrower.
+
+     The shot then runs past the right edge of the container to the viewport
+     edge. Confined to its half of the centred measure it was too small to read,
+     which is the whole reason it is up here rather than down in the gallery;
+     .hero clips the overhang so the page never scrolls sideways.
+  */
   .hero .wrap {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
     column-gap: clamp(40px, 4vw, 72px);
     align-items: start;
+    /* The shot's column no longer has to fit inside the centred measure. */
+    overflow: visible;
   }
 
   .hero .eyebrow,
@@ -896,38 +910,13 @@ footer nav {
     grid-column: 1;
   }
 
-  /* Spans the five text rows and centres against them, so the shot reads as
-     the hero's companion rather than as the first item of the gallery. */
+  /* Spans the five text rows and centres against them, so the shot reads as the
+     hero's companion rather than as the first item of the gallery. */
   .hero-shot {
     grid-column: 2;
     grid-row: 1 / span 5;
     align-self: center;
     margin-top: 0;
-  }
-
-  /* Full width again: three capability columns inside half the page would be
-     unreadable. */
-  .caps {
-    grid-column: 1 / -1;
-  }
-}
-
-/* -------------------------------------------------- hero shot legibility --- */
-
-/*
-   Above the two-column breakpoint the shot shares the fold with the text, so it
-   only gets about half the container. Letting it run past the right edge of the
-   container to the viewport edge buys back the width that makes it readable,
-   which is the whole reason it is up here rather than in the gallery below.
-*/
-@media (min-width: 1100px) {
-  .hero .wrap {
-    /* The shot's column no longer has to fit inside the centred measure. */
-    overflow: visible;
-  }
-
-  .hero-shot {
-    /* Grows rightward into the page gutter and beyond, clipped by the section. */
     width: calc(100% + max(0px, (100vw - var(--col)) / 2) + var(--gutter));
     max-width: none;
   }
@@ -938,9 +927,10 @@ footer nav {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
   }
-}
 
-/* The section clips the overhang so the page never scrolls sideways. */
-.hero {
-  overflow-x: clip;
+  /* Full width again: three capability columns inside half the page would be
+     unreadable. */
+  .caps {
+    grid-column: 1 / -1;
+  }
 }

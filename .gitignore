@@ -1,6 +1,9 @@
 node_modules/
 dist/
 dashboard/dist/
+# Build-time encode cache for the landing page's screenshots. Deliberately not
+# under node_modules, so `npm ci` does not throw it away on every CI run.
+site/.cache/
 
 # Local secrets and generated config — never commit these.
 .dev.vars

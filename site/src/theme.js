@@ -68,24 +68,19 @@
   // Before first paint: pin the palette. The button is hidden until this class
   // appears, so a page without JavaScript never shows a control that does
   // nothing.
-  root.setAttribute("data-setting", stored());
-  if (stored() !== "auto") root.setAttribute("data-theme", stored());
+  //
+  // Read once and then tracked here rather than re-read on each click:
+  // `stored()` answers "auto" whenever the read throws or the write below was
+  // swallowed — private browsing, or storage blocked — so deriving the cycle
+  // from it made every click compute auto -> light, leaving dark and "back to
+  // auto" unreachable. Storage is write-if-possible; this is the source of truth.
+  var setting = stored();
+  apply(setting);
   root.className += " js";
 
   // Auto -> light -> dark -> auto. Cycling back to "auto" matters: a two-state
   // toggle would leave no way to hand the choice back to the system.
   var NEXT = { auto: "light", light: "dark", dark: "auto" };
-
-  /**
-   * The current setting, held here rather than re-read from localStorage.
-   *
-   * `stored()` answers "auto" whenever the read throws or the write was
-   * swallowed below — private browsing, or storage blocked by the user. Deriving
-   * the next setting from it there meant every click computed auto -> light, so
-   * dark and "back to auto" were unreachable and the toggle looked broken.
-   * Storage is now write-if-possible; this variable is what the cycle turns on.
-   */
-  var setting = stored();
 
   document.addEventListener("click", function (event) {
     var target = event.target;
@@ -103,6 +98,6 @@
   });
 
   document.addEventListener("DOMContentLoaded", function () {
-    apply(stored());
+    apply(setting);
   });
 })();
