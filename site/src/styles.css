@@ -915,35 +915,6 @@ footer nav {
 /* -------------------------------------------------- hero shot legibility --- */
 
 /*
-   The hero screenshot is a 1280px-wide dashboard. Scaled to fit a phone it is
-   1100 pixels of UI in 340, which is not a small screenshot — it is a grey
-   texture. Below 900px it is therefore shown as a CROP at close to natural
-   scale: the top-left corner, which is the masthead, the "Inbox" heading and
-   the first rows, all of which are legible and are the part worth seeing.
-
-   The container clips; the image is deliberately wider than it so there is
-   something to clip. `object-position: left top` keeps the crop anchored to the
-   corner rather than drifting as the viewport changes.
-*/
-@media (max-width: 899px) {
-  .hero-shot .shot {
-    /* Tall enough for the heading, the filter row and several messages. */
-    aspect-ratio: 3 / 4;
-  }
-
-  .hero-shot .shot img {
-    width: auto;
-    max-width: none;
-    /* ~1.7x. Enough to make the UI text readable while still showing the
-       toolbar and the first few messages, which is what makes it look like a
-       mail client rather than a header. */
-    height: 135%;
-    object-fit: cover;
-    object-position: left top;
-  }
-}
-
-/*
    Above the two-column breakpoint the shot shares the fold with the text, so it
    only gets about half the container. Letting it run past the right edge of the
    container to the viewport edge buys back the width that makes it readable,
