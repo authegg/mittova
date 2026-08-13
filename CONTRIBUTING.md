@@ -111,6 +111,24 @@ public repository's secrets is one misconfigured workflow away from being used b
 a fork. The connection is revocable from Cloudflare in one click, which is not
 true of a credential that has been copied somewhere.
 
+The connection is made in the dashboard — Workers & Pages → **mittova-site** →
+Settings → Builds → Connect — and there is deliberately no way to script it: it
+is an authorization grant from GitHub to Cloudflare, not something a Cloudflare
+API token can do. Its settings:
+
+| Field | Value |
+|---|---|
+| Repository | `authegg/mittova` |
+| Branch | `main` |
+| Root directory | `site` |
+| Build command | `npm ci && npm run build` |
+| Deploy command | `npx wrangler deploy` |
+
+`site/wrangler.jsonc` supplies the Worker name and both custom-domain routes, so
+nothing else needs configuring. Builds reuse `site/.cache/`, which is why the
+screenshot encoder is cached outside `node_modules` — `npm ci` deletes that, and
+a cold encode is 14s against 86ms warm.
+
 The consequence is that **whatever lands on `main` is deployed**. That is why no
 Dependabot ecosystem here is auto-merged: auto-merge plus auto-deploy means an
 unreviewed dependency bump ships to mittova.com on its own.
