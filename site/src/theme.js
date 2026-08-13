@@ -12,8 +12,8 @@
  *
  * It runs inline in <head>, before the body exists, so that a pinned dark page
  * never flashes light. That means no element lookups at the top level: the
- * click handler is delegated from `document`, and the screenshots are synced on
- * DOMContentLoaded.
+ * click handler is delegated from `document`, and the screenshots are corrected
+ * as the parser inserts them.
  */
 
 (function () {
@@ -47,22 +47,30 @@
         "Colour theme: " + { auto: "match system", light: "light", dark: "dark" }[setting],
       );
     }
+  }
 
-    // Repoint each screenshot at the matching plate. Without this the pictures
-    // would keep following the system while the page around them did not.
+  /**
+   * Point one screenshot `<source>` at the plate the current setting wants.
+   *
+   * @param {Element} source
+   * @param {"auto"|"light"|"dark"} setting
+   */
+  function plate(source, setting) {
+    var scheme = source.getAttribute("data-scheme");
+    source.setAttribute(
+      "media",
+      setting === "auto"
+        ? "(prefers-color-scheme: " + scheme + ")"
+        : scheme === setting
+          ? "all"
+          : "not all",
+    );
+  }
+
+  /** @param {"auto"|"light"|"dark"} setting */
+  function syncPlates(setting) {
     var sources = document.querySelectorAll("picture source[data-scheme]");
-    for (var i = 0; i < sources.length; i++) {
-      var source = sources[i];
-      var scheme = source.getAttribute("data-scheme");
-      source.setAttribute(
-        "media",
-        setting === "auto"
-          ? "(prefers-color-scheme: " + scheme + ")"
-          : scheme === setting
-            ? "all"
-            : "not all",
-      );
-    }
+    for (var i = 0; i < sources.length; i++) plate(sources[i], setting);
   }
 
   // Before first paint: pin the palette. The button is hidden until this class
@@ -77,6 +85,38 @@
   var setting = stored();
   apply(setting);
   root.className += " js";
+
+  /**
+   * Correct each screenshot's `<source>` as it is parsed, not afterwards.
+   *
+   * Only needed when a theme is pinned: on "auto" the markup's own
+   * `prefers-color-scheme` queries are already right, and rewriting them to the
+   * identical value is pointless work that can itself force a re-selection.
+   *
+   * Syncing on DOMContentLoaded — which is what this used to do — meant that a
+   * visitor whose pinned theme differed from their system watched the system's
+   * plate load and paint, then get replaced: a visible dark-to-light flash on
+   * the hero, which is the one image fetched eagerly. Fixing each `<source>` as
+   * the parser inserts it gets ahead of the selection instead.
+   */
+  if (setting !== "auto") {
+    var observer = new MutationObserver(function (records) {
+      for (var r = 0; r < records.length; r++) {
+        var added = records[r].addedNodes;
+        for (var n = 0; n < added.length; n++) {
+          var node = added[n];
+          if (!(node instanceof Element)) continue;
+          if (node.matches("source[data-scheme]")) plate(node, setting);
+          var nested = node.querySelectorAll("source[data-scheme]");
+          for (var k = 0; k < nested.length; k++) plate(nested[k], setting);
+        }
+      }
+    });
+    observer.observe(root, { childList: true, subtree: true });
+    document.addEventListener("DOMContentLoaded", function () {
+      observer.disconnect();
+    });
+  }
 
   // Auto -> light -> dark -> auto. Cycling back to "auto" matters: a two-state
   // toggle would leave no way to hand the choice back to the system.
@@ -95,9 +135,14 @@
       // Nothing to do — the change still applies for this page view.
     }
     apply(next);
+    // Always synced on a click, including back to "auto", which has to restore
+    // the media queries the pinned states overwrote.
+    syncPlates(next);
   });
 
+  // The observer above handles the pinned case during parsing; this is the
+  // catch-all for anything it missed, and a no-op on "auto".
   document.addEventListener("DOMContentLoaded", function () {
-    apply(setting);
+    if (setting !== "auto") syncPlates(setting);
   });
 })();
