@@ -11,16 +11,19 @@
  * wider than ~1120 CSS pixels, so shipping them untouched would be sending
  * roughly ten times the bytes anybody needs.
  *
- * Encoding is expensive — AVIF especially — so results are cached, keyed by the
- * source's size and mtime. A warm build does no image work at all.
+ * Encoding is expensive — AVIF especially — so results are cached under
+ * site/.cache, keyed by a hash of the source's bytes. A warm rebuild does no
+ * image work at all.
  *
- * The cache deliberately sits in site/.cache rather than node_modules/.cache:
- * `npm ci` deletes node_modules, so CI and every Workers Builds deploy started
- * cold and paid the full encode every single time.
+ * The cache does NOT survive in CI: Workers Builds clones fresh, so every
+ * deployment pays a full cold encode (~21s, measured). Keeping it outside
+ * node_modules still helps locally, where `npm ci` would otherwise throw it
+ * away, but the CI build is cold by nature and the parallel encode below is
+ * what actually makes that bearable.
  */
 
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
@@ -89,10 +92,22 @@ function cached(key: string, produce: () => Promise<Buffer>): Promise<Buffer> {
   }
 }
 
-/** Cheap identity for a source file: a changed screenshot changes its stat. */
+/**
+ * Identity for a source file: a hash of its contents.
+ *
+ * Deliberately not `path:size:mtime`, which is what this used to be. Both the
+ * absolute path and the mtime differ between a developer's checkout and a fresh
+ * CI clone, so the same screenshot produced a different id in each — which meant
+ * the emitted filenames changed on every machine, every deploy re-uploaded all
+ * seventy image variants, and the encode cache could never hit in CI because its
+ * keys were never the same twice.
+ *
+ * Hashing the bytes makes the build reproducible: same screenshot, same
+ * filename, anywhere. Reading eleven PNGs costs a few milliseconds against the
+ * seconds of encoding it guards.
+ */
 function stamp(path: string): string {
-  const s = statSync(path);
-  return createHash("sha1").update(`${path}:${s.size}:${s.mtimeMs}`).digest("hex").slice(0, 12);
+  return createHash("sha1").update(readFileSync(path)).digest("hex").slice(0, 12);
 }
 
 async function encode(src: string, width: number, format: Variant["format"]): Promise<Buffer> {
@@ -128,8 +143,8 @@ export async function render(basename: string, withFallback = true): Promise<Ren
   // Concurrently: these encodes are independent, and sharp releases the loop
   // while libvips works on its own thread pool. Awaiting them one at a time made
   // a cold build take 48s of wall clock for 48s of CPU on a sixteen-core
-  // machine — every CI run and every deploy paid it, because `npm ci` wipes the
-  // cache these results live in.
+  // machine. Every Workers Builds deployment is a cold build, so this is the
+  // difference that matters there rather than the cache.
   const variants = await Promise.all(
     wanted.map(async ({ width, format }): Promise<Variant> => {
       const key = `${basename}.${id}.${width}.${format}`;

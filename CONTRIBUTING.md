@@ -125,9 +125,13 @@ API token can do. Its settings:
 | Deploy command | `npx wrangler deploy` |
 
 `site/wrangler.jsonc` supplies the Worker name and both custom-domain routes, so
-nothing else needs configuring. Builds reuse `site/.cache/`, which is why the
-screenshot encoder is cached outside `node_modules` — `npm ci` deletes that, and
-a cold encode is 14s against 86ms warm.
+nothing else needs configuring.
+
+Every build there is a **cold** build: Workers Builds clones fresh, so the
+screenshot cache in `site/.cache/` never survives and roughly 21 of the ~45
+seconds go on re-encoding the eleven screenshots. That is expected. The encodes
+run concurrently, which is what keeps it to 21s rather than 48s; the cache is a
+local convenience only.
 
 The consequence is that **whatever lands on `main` is deployed**. That is why no
 Dependabot ecosystem here is auto-merged: auto-merge plus auto-deploy means an
