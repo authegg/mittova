@@ -39,6 +39,31 @@ export function attachmentKey(address: string, messageId: string, attachmentId: 
   return `${domainPrefix(address)}att/${messageId}/${attachmentId}`;
 }
 
+/**
+ * Delete every object under a prefix, or the whole bucket when omitted.
+ *
+ * Paginated and batched, both deliberately: `list` returns at most 1000 keys per
+ * page, so a single call silently leaves the rest behind, and `delete` accepts
+ * up to 1000 keys at once, so deleting them one at a time turns one round trip
+ * into a thousand — enough to matter against a Worker's subrequest budget.
+ *
+ * Lives here because this module already owns the key layout, and because both
+ * the demo's hourly reset and the test harness need exactly this.
+ */
+export async function deleteByPrefix(bucket: R2Bucket, prefix?: string): Promise<number> {
+  let deleted = 0;
+  let cursor: string | undefined;
+  do {
+    const page = await bucket.list({ prefix, cursor });
+    if (page.objects.length > 0) {
+      await bucket.delete(page.objects.map((o) => o.key));
+      deleted += page.objects.length;
+    }
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  return deleted;
+}
+
 export function backupKey(at: Date): string {
   const iso = at.toISOString();
   return `${BACKUP_PREFIX}${iso.slice(0, 10)}/mittova-${iso.replace(/[:.]/g, "-")}.ndjson`;

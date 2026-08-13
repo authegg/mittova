@@ -1,4 +1,5 @@
 import { applyD1Migrations, env } from "cloudflare:test";
+import { deleteByPrefix } from "../src/services/storage";
 import { beforeAll, beforeEach } from "vitest";
 
 /**
@@ -50,14 +51,7 @@ beforeEach(async () => {
   // R2 holds raw MIME, attachments and backups. Left in place it makes any test
   // that counts objects depend on what ran before it — a backup written by one
   // test was still there for the next, which is an order-dependent pass waiting
-  // to become a confusing failure.
-  // Paginated for the same reason resetDemoData is: R2 returns at most 1000
-  // keys per call, and a truncated first page would leak the rest into the next
-  // test — reintroducing precisely the order dependence this exists to remove.
-  let cursor: string | undefined;
-  do {
-    const page = await env.STORAGE.list({ cursor });
-    for (const o of page.objects) await env.STORAGE.delete(o.key);
-    cursor = page.truncated ? page.cursor : undefined;
-  } while (cursor);
+  // to become a confusing failure. The helper is the demo reset's, so pagination
+  // and batching are defined once rather than in two loops that can drift.
+  await deleteByPrefix(env.STORAGE);
 });

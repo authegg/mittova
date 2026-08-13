@@ -2,6 +2,7 @@ import { api } from "../api";
 import { useAsync } from "../hooks";
 import { Badge, Card, EmptyState, relativeTime, TableSkeleton } from "../components/ui";
 import Icon from "../components/Icon";
+import { DemoDnsNotice } from "../components/DemoBanner";
 
 type Day = { day: string; inbound: number; outbound: number };
 
@@ -350,14 +351,7 @@ export default function Overview({
           }
           tight
         >
-          {isDemo && (
-            <div className="notice" style={{ margin: "0 0 12px" }}>
-              Every record below is missing, and that is correct: the demo&rsquo;s domains are
-              fabricated <code>.example</code> names that have no DNS and never will. This panel
-              reports what public DNS actually returns, so there is nothing for it to find. On your
-              own deployment it is where MX, SPF, DKIM and DMARC are verified.
-            </div>
-          )}
+          {isDemo && <DemoDnsNotice />}
 
           {domain.loading ? (
             <TableSkeleton rows={3} cols={3} />

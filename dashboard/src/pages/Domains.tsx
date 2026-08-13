@@ -11,6 +11,7 @@ import {
   absoluteTime,
 } from "../components/ui";
 import Icon from "../components/Icon";
+import { DemoDnsNotice } from "../components/DemoBanner";
 
 const SERVICE_LABEL: Record<RecordCheck["service"], string> = {
   routing: "Receiving mail",
@@ -367,21 +368,9 @@ export default function Domains({ isDemo = false }: { isDemo?: boolean }) {
         </div>
       </div>
 
-      {/*
-        On the demo every record reads as missing, and it should: northwind.example
-        is fabricated, so no DNS exists for it and none ever will. Saying so is the
-        only honest option — showing invented green ticks here would misrepresent
-        the one panel whose entire job is to report what public DNS actually says.
-      */}
-      {isDemo && (
-        <div className="notice">
-          Every record below is missing, and that is correct: these are fabricated{" "}
-          <code>.example</code> domains that have no DNS and never will. This panel reports what
-          public DNS actually returns rather than what has been configured, so there is nothing for
-          it to find. On your own deployment it is where your MX, SPF, DKIM and DMARC records are
-          verified, and where a domain is onboarded for sending.
-        </div>
-      )}
+      {/* Showing invented green ticks instead would misrepresent the one panel
+          whose entire job is to report what public DNS actually says. */}
+      {isDemo && <DemoDnsNotice />}
 
       {state.error && <div className="notice bad">{state.error}</div>}
 

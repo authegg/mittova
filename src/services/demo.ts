@@ -22,7 +22,11 @@
 
 import seedSql from "./demo-seed.sql";
 import { splitStatements } from "./sql";
-import { BACKUP_PREFIX } from "./storage";
+import { BACKUP_PREFIX, deleteByPrefix } from "./storage";
+import { DemoModeError, isDemo } from "./demo-mode";
+
+// Re-exported so a caller that wants the reset and the flag has one import.
+export { DemoModeError, isDemo } from "./demo-mode";
 
 /**
  * The demo's own schedule. The Worker's `scheduled` handler tells its jobs apart
@@ -30,20 +34,6 @@ import { BACKUP_PREFIX } from "./storage";
  * "any other cron" branch.
  */
 export const DEMO_RESET_CRON = "0 * * * *";
-
-/**
- * Exactly one value means yes.
- *
- * Not `Boolean(env.DEMO_MODE)`, and not a list of friendly spellings: an
- * unrecognised value must read as off, and a var that is present-but-empty on
- * every normal deployment must never read as on.
- */
-export function isDemo(env: Env): boolean {
-  return env.DEMO_MODE === "1";
-}
-
-/** Thrown rather than returned: reaching this at all means something is wrong. */
-export class DemoModeError extends Error {}
 
 /**
  * A plausible raw source for a seeded message.
@@ -131,19 +121,10 @@ export async function resetDemoData(
    * separation D1 and KV already have. Nothing else writes here, so `_backups/`
    * in this bucket can only be the demo's own.
    *
-   * Paginated: R2 returns at most 1000 keys per call, and a truncated first page
-   * quietly leaving objects behind is the same bug this sweep exists to fix.
+   * Pagination and batching live in deleteByPrefix, beside the key layout it
+   * operates on.
    */
-  let swept = 0;
-  let cursor: string | undefined;
-  do {
-    const page = await env.STORAGE.list({ prefix: BACKUP_PREFIX, cursor });
-    for (const object of page.objects) {
-      await env.STORAGE.delete(object.key);
-      swept++;
-    }
-    cursor = page.truncated ? page.cursor : undefined;
-  } while (cursor);
+  const swept = await deleteByPrefix(env.STORAGE, BACKUP_PREFIX);
 
   const { results } = await env.DB.prepare(
     `SELECT raw_key, from_addr, from_name, to_addr, subject, rfc_message_id,
@@ -152,11 +133,15 @@ export async function resetDemoData(
       WHERE raw_key IS NOT NULL`,
   ).all<DemoMessageRow>();
 
-  for (const row of results) {
-    await env.STORAGE.put(row.raw_key, rawSource(row), {
-      httpMetadata: { contentType: "message/rfc822" },
-    });
-  }
+  // Concurrently: independent objects, and seven sequential round trips inside
+  // waitUntil is time the reset holds the invocation open for no reason.
+  await Promise.all(
+    results.map((row) =>
+      env.STORAGE.put(row.raw_key, rawSource(row), {
+        httpMetadata: { contentType: "message/rfc822" },
+      }),
+    ),
+  );
 
   return {
     statements: statements.length,

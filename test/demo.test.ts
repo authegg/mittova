@@ -2,6 +2,7 @@ import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:
 import { beforeEach, describe, expect, it } from "vitest";
 import worker from "../src/index";
 import { DEMO_RESET_CRON, DemoModeError, resetDemoData } from "../src/services/demo";
+import { rawKey } from "../src/services/storage";
 
 /**
  * The two things that make a public demo safe to leave on the internet, and the
@@ -386,7 +387,7 @@ describe("the hourly reset fails closed", () => {
     expect(hit, "search should find seeded mail").not.toBeNull();
 
     // Raw source is stored, so "view raw" does not 404 on the demo.
-    const raw = await env.STORAGE.get("northwind.example/raw/mb_hello/msg_1.eml");
+    const raw = await env.STORAGE.get(rawKey("hello@northwind.example", "mb_hello", "msg_1"));
     expect(raw, "raw MIME should be in R2").not.toBeNull();
     expect(await raw!.text()).toContain("Subject: Re: Bulk order for the autumn catalogue");
   });
@@ -395,8 +396,6 @@ describe("the hourly reset fails closed", () => {
 /* -------------------------------------------------------------- backup --- */
 
 describe("the demo takes no backups", () => {
-  beforeEach(seedTenant);
-
   const backups = async (): Promise<number> =>
     (await env.STORAGE.list({ prefix: "_backups/" })).objects.length;
 

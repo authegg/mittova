@@ -34,7 +34,7 @@ import {
   type Scope,
 } from "../auth";
 import { sendEmail, SendError } from "../services/send";
-import { isDemo } from "../services/demo";
+import { isDemo } from "../services/demo-mode";
 import {
   addDomain,
   checkDomain,
@@ -247,10 +247,12 @@ api.post("/auth/login", async (c) => {
    * The per-IP window still bounds a single abuser, and it is the one that was
    * meant to.
    */
-  const keys: [string, Limit][] = [[`login:ip:${ip}`, LOGIN_LIMIT_IP]];
-  if (!isDemo(c.env)) {
-    keys.unshift([`login:acct:${account}`, LOGIN_LIMIT_ACCOUNT]);
-  }
+  const keys: [string, Limit][] = isDemo(c.env)
+    ? [[`login:ip:${ip}`, LOGIN_LIMIT_IP]]
+    : [
+        [`login:acct:${account}`, LOGIN_LIMIT_ACCOUNT],
+        [`login:ip:${ip}`, LOGIN_LIMIT_IP],
+      ];
 
   for (const [key, limit] of keys) {
     const check = await checkRateLimit(c.env.SETTINGS, key, limit);

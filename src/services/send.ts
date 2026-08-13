@@ -9,7 +9,7 @@ import {
   attachments,
 } from "../db/schema";
 import { sanitiseEmailHtml, htmlToText, wrapForEmail } from "./html";
-import { isDemo } from "./demo";
+import { isDemo } from "./demo-mode";
 import { suppress } from "./bounce";
 import { attachmentKey } from "./storage";
 import { resolveThreadId } from "../email/ingest";

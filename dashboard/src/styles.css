@@ -2328,7 +2328,8 @@ th.num {
 }
 
 .demo-banner code,
-.demo-notice code {
+.demo-notice code,
+.demo-dns-notice code {
   font-family: var(--mono);
   font-size: 0.94em;
   padding: 1px 5px;
@@ -2336,15 +2337,22 @@ th.num {
   background: color-mix(in srgb, var(--warn-ink) 14%, transparent);
 }
 
-/* The same message on the sign-in screen, where a first-time visitor meets it
-   before they have anywhere to go. */
-.demo-notice {
+/* The warn-toned inline notices: the demo terms on the sign-in screen, and the
+   DNS explanation on the overview and domain panels. */
+.demo-notice,
+.demo-dns-notice {
+  /* border-color first: it is a shorthand, so setting it after the left accent
+     would silently erase it — which is what the earlier ordering did. */
+  border-color: transparent;
   border-left-color: var(--warn-ink);
   background: var(--warn-bg);
   color: var(--warn-ink);
-  border-color: transparent;
   text-align: left;
   margin-bottom: 14px;
+}
+
+.demo-dns-notice {
+  margin-bottom: 12px;
 }
 
 .demo-notice p {

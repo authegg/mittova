@@ -39,7 +39,7 @@ function heading(col) {
   return col.note ? `${name}<br>${cell(col.note)}` : name;
 }
 
-export function renderMarkdown(data) {
+function renderMarkdown(data) {
   const head = `|  | ${data.columns.map(heading).join(" | ")} |`;
   const rule = `|${"---|".repeat(data.columns.length + 1)}`;
   const rows = data.rows.map((r) => `| ${cell(r.label)} | ${r.cells.map(cell).join(" | ")} |`);

@@ -69,13 +69,6 @@ export default {
   },
 
   async scheduled(event, env, ctx): Promise<void> {
-    // Two schedules, told apart by cron rather than by a flag: the nightly one
-    // backs up, the frequent one checks health. Backing up every few hours
-    // would be waste; checking health once a day would let a broken domain sit
-    // broken all day.
-    const nightly = event.cron === "17 3 * * *";
-    const demo = isDemo(env);
-
     /**
      * The public demo's only scheduled job: wipe itself back to the seed.
      *
@@ -89,7 +82,7 @@ export default {
      * Nothing else runs on the demo: the health check exists to notice a broken
      * domain or a lapsed DNS record, and the demo has neither.
      */
-    if (demo) {
+    if (isDemo(env)) {
       // Returning for *every* cron, not just the reset's, is what makes the
       // claim above true. Guarding only the reset left the health check and its
       // alert mail reachable on the demo from any other schedule — harmless
@@ -109,11 +102,14 @@ export default {
       return;
     }
 
+    // Two schedules, told apart by cron rather than by a flag: the nightly one
+    // backs up, the frequent one checks health. Backing up every few hours would
+    // be waste; checking health once a day would let a broken domain sit broken
+    // all day. Neither is reachable on the demo, which returned above.
+    const nightly = event.cron === "17 3 * * *";
+
     ctx.waitUntil(
       (async () => {
-        // No `&& !demo` here: the demo returned above, for every cron it could
-        // ever be given. A second check would read as a guard while being
-        // unreachable, which is how a comment starts lying.
         if (nightly) {
           try {
             const result = await runBackup(env);
