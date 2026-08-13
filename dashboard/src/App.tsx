@@ -223,6 +223,7 @@ function Shell() {
             isOwner={isOwner}
             name={me?.name ?? "there"}
             onOpenMessage={setOpenMessage}
+            isDemo={demo !== null}
           />
         )}
 

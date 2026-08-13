@@ -187,11 +187,19 @@ export default function Overview({
   isOwner,
   name,
   onOpenMessage,
+  isDemo = false,
 }: {
   navigate: (to: string) => void;
   isOwner: boolean;
   name: string;
   onOpenMessage: (id: string) => void;
+  /**
+   * The demo's domains are fabricated `.example` names with no DNS, so every
+   * record reads as missing and the health tile reads as an alarm. This is the
+   * first screen a visitor sees, and without saying so it looks like a broken
+   * product rather than a deliberate one.
+   */
+  isDemo?: boolean;
 }) {
   const stats = useAsync(() => api.stats(14), []);
   const boxes = useAsync(() => api.mailboxes(), []);
@@ -257,7 +265,11 @@ export default function Overview({
               <div className="metric-label">DNS health</div>
               <div className="metric-value">{dns.total ? `${dns.ok}/${dns.total}` : "—"}</div>
               <div className="metric-sub">
-                {dnsHealthy ? "all records verified" : "needs attention"}
+                {isDemo
+                  ? "fabricated domains, no DNS"
+                  : dnsHealthy
+                    ? "all records verified"
+                    : "needs attention"}
               </div>
             </div>
           </>
@@ -338,6 +350,15 @@ export default function Overview({
           }
           tight
         >
+          {isDemo && (
+            <div className="notice" style={{ margin: "0 0 12px" }}>
+              Every record below is missing, and that is correct: the demo&rsquo;s domains are
+              fabricated <code>.example</code> names that have no DNS and never will. This panel
+              reports what public DNS actually returns, so there is nothing for it to find. On your
+              own deployment it is where MX, SPF, DKIM and DMARC are verified.
+            </div>
+          )}
+
           {domain.loading ? (
             <TableSkeleton rows={3} cols={3} />
           ) : (
