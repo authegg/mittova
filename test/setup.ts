@@ -51,6 +51,13 @@ beforeEach(async () => {
   // that counts objects depend on what ran before it — a backup written by one
   // test was still there for the next, which is an order-dependent pass waiting
   // to become a confusing failure.
-  const objects = await env.STORAGE.list();
-  for (const o of objects.objects) await env.STORAGE.delete(o.key);
+  // Paginated for the same reason resetDemoData is: R2 returns at most 1000
+  // keys per call, and a truncated first page would leak the rest into the next
+  // test — reintroducing precisely the order dependence this exists to remove.
+  let cursor: string | undefined;
+  do {
+    const page = await env.STORAGE.list({ cursor });
+    for (const o of page.objects) await env.STORAGE.delete(o.key);
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
 });

@@ -231,10 +231,26 @@ api.post("/auth/login", async (c) => {
 
   const account = (email ?? "__admin__").trim().toLowerCase();
   const ip = clientIp(c.req.raw);
-  const keys: [string, Limit][] = [
-    [`login:acct:${account}`, LOGIN_LIMIT_ACCOUNT],
-    [`login:ip:${ip}`, LOGIN_LIMIT_IP],
-  ];
+
+  /**
+   * The per-account window is skipped on the demo, where it is a global kill
+   * switch rather than a protection.
+   *
+   * Every demo visitor signs in with an empty email, so they all share the one
+   * `__admin__` bucket. The limit is checked *before* the password is verified
+   * and only a success clears it, so eight wrong attempts — one bot, or a few
+   * people pasting the password with a trailing space — return 429 to everybody
+   * for the rest of the window, with no way for anyone to succeed and reset it.
+   *
+   * Nothing is lost by dropping it there: the password is published on the page,
+   * so grinding down that one account is not an attack anyone needs to mount.
+   * The per-IP window still bounds a single abuser, and it is the one that was
+   * meant to.
+   */
+  const keys: [string, Limit][] = [[`login:ip:${ip}`, LOGIN_LIMIT_IP]];
+  if (!isDemo(c.env)) {
+    keys.unshift([`login:acct:${account}`, LOGIN_LIMIT_ACCOUNT]);
+  }
 
   for (const [key, limit] of keys) {
     const check = await checkRateLimit(c.env.SETTINGS, key, limit);

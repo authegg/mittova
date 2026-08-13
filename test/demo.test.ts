@@ -185,6 +185,68 @@ describe("the demo announces itself, and nothing else does", () => {
     expect(demo.demo).toEqual({ password: "demo" });
   });
 
+  it("cannot be locked out of sign-in by one visitor's failures", async () => {
+    /*
+     * Every demo visitor signs in with an empty email, so they share one
+     * `login:acct:__admin__` bucket. The limit is checked before the password is
+     * verified and only a success clears it, so on the demo it was a global kill
+     * switch: eight wrong attempts locked out the whole site until the window
+     * expired, with nobody able to succeed and reset it.
+     */
+    const wrong = (ip: string) =>
+      call(
+        "/api/auth/login",
+        {
+          method: "POST",
+          body: json({ password: "not-the-password" }),
+          headers: { "cf-connecting-ip": ip },
+        },
+        undefined,
+        demoEnv,
+      );
+
+    // Well past LOGIN_LIMIT_ACCOUNT (8), but within LOGIN_LIMIT_IP (30).
+    for (let i = 0; i < 12; i++) {
+      expect((await wrong("203.0.113.9")).status, `attempt ${i + 1}`).toBe(401);
+    }
+
+    // A different visitor must still be able to get in.
+    const other = await call(
+      "/api/auth/login",
+      {
+        method: "POST",
+        body: json({ password: "test-admin-password" }),
+        headers: { "cf-connecting-ip": "198.51.100.4" },
+      },
+      undefined,
+      demoEnv,
+    );
+    expect(other.status, "another visitor is locked out by someone else's typos").toBe(200);
+  });
+
+  it("still rate limits the account on a real deployment", async () => {
+    // The positive half: dropping the account window must not drop it for
+    // everyone. A real deployment's admin login is still ground-down-proof.
+    let sawLimit = false;
+    for (let i = 0; i < 12; i++) {
+      const res = await call(
+        "/api/auth/login",
+        {
+          method: "POST",
+          body: json({ password: "not-the-password" }),
+          headers: { "cf-connecting-ip": "203.0.113.77" },
+        },
+        undefined,
+        realEnv,
+      );
+      if (res.status === 429) {
+        sawLimit = true;
+        break;
+      }
+    }
+    expect(sawLimit, "a non-demo deployment must still lock the account window").toBe(true);
+  });
+
   it("never serves the ADMIN_PASSWORD secret itself", async () => {
     // DEMO_PASSWORD is a separate var precisely so that the published value and
     // the real administrator credential are not the same string in the code. A
