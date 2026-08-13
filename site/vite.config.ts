@@ -109,7 +109,7 @@ function screenshots(): Plugin {
       server.middlewares.use((req, res, next) => {
         const path = (req.url ?? "").split("?")[0]!.replace(/^\//, "");
         if (!path.startsWith("img/")) return next();
-        void prepare().then(() => {
+        const promise = prepare().then(() => {
           for (const r of rendered.values()) {
             const hit = r.variants.find((v) => v.fileName === path);
             if (!hit) continue;
@@ -119,6 +119,12 @@ function screenshots(): Plugin {
           }
           next();
         });
+        // Without this a rejection from prepare() — a missing or corrupt PNG in
+        // assets/ — never responds and never calls next(), so the request hangs
+        // until the browser gives up and the only clue is an unhandled rejection
+        // in the terminal. Every other failure path in these plugins throws
+        // loudly; this one should too.
+        promise.catch(next);
       });
     },
 

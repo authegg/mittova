@@ -76,11 +76,23 @@
   // toggle would leave no way to hand the choice back to the system.
   var NEXT = { auto: "light", light: "dark", dark: "auto" };
 
+  /**
+   * The current setting, held here rather than re-read from localStorage.
+   *
+   * `stored()` answers "auto" whenever the read throws or the write was
+   * swallowed below — private browsing, or storage blocked by the user. Deriving
+   * the next setting from it there meant every click computed auto -> light, so
+   * dark and "back to auto" were unreachable and the toggle looked broken.
+   * Storage is now write-if-possible; this variable is what the cycle turns on.
+   */
+  var setting = stored();
+
   document.addEventListener("click", function (event) {
     var target = event.target;
     if (!(target instanceof Element)) return;
     if (!target.closest(".theme")) return;
-    var next = /** @type {"auto"|"light"|"dark"} */ (NEXT[stored()]);
+    var next = /** @type {"auto"|"light"|"dark"} */ (NEXT[setting]);
+    setting = next;
     try {
       if (next === "auto") localStorage.removeItem(KEY);
       else localStorage.setItem(KEY, next);

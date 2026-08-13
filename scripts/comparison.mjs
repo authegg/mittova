@@ -21,16 +21,28 @@ const README = join(root, "README.md");
 const START = "<!-- comparison:start -->";
 const END = "<!-- comparison:end -->";
 
+/**
+ * A pipe inside a cell would end the cell.
+ *
+ * The HTML renderer escapes nothing because HTML does not care, so a value like
+ * `Yes | with a caveat` would add a column to one Markdown row and misalign the
+ * table while the landing page stayed correct — the two representations
+ * disagreeing, which is the exact thing one canonical source exists to prevent.
+ * `--check` cannot catch it either: it compares generated output against
+ * generated output, so both sides would be wrong together.
+ */
+const cell = (value) => String(value).replace(/\|/g, "\\|");
+
 /** A column heading, with its qualifier on a second line. */
 function heading(col) {
-  const name = col.highlight ? `**${col.name}**` : col.name;
-  return col.note ? `${name}<br>${col.note}` : name;
+  const name = col.highlight ? `**${cell(col.name)}**` : cell(col.name);
+  return col.note ? `${name}<br>${cell(col.note)}` : name;
 }
 
 export function renderMarkdown(data) {
   const head = `|  | ${data.columns.map(heading).join(" | ")} |`;
   const rule = `|${"---|".repeat(data.columns.length + 1)}`;
-  const rows = data.rows.map((r) => `| ${r.label} | ${r.cells.join(" | ")} |`);
+  const rows = data.rows.map((r) => `| ${cell(r.label)} | ${r.cells.map(cell).join(" | ")} |`);
   return [head, rule, ...rows].join("\n");
 }
 

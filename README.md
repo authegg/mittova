@@ -295,6 +295,22 @@ is invisible to it and the next `db:generate` reproduces the whole thing as a fr
 `npm run db:generate` printing `No schema changes, nothing to migrate` is the check that the chain
 is intact.
 
+### Upgrading an existing deployment
+
+`wrangler.jsonc` is gitignored, so `git pull` never touches it. Two entries have
+been added to `wrangler.example.jsonc` that an existing config will not have, and
+the build fails without the first:
+
+```jsonc
+// Required. The Worker imports src/services/demo-seed.sql as a text module, so
+// every build needs the loader — not just the demo's. Without it, `npm run build`
+// fails with "No loader is configured for .sql files".
+"rules": [{ "type": "Text", "globs": ["**/*.sql"] }],
+```
+
+`DEMO_MODE` is deliberately **not** something to add: it belongs to the public
+demo alone, and setting it disables sending and wipes the database every hour.
+
 ### Upgrading from an earlier baseline
 
 The migrations are squashed periodically: several files are replaced by the
