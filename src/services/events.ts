@@ -98,6 +98,22 @@ export function webhookBody(url: string, body: Record<string, unknown>): string 
   return JSON.stringify({ content: lines.join("\n").slice(0, 2000), allowed_mentions: { parse: [] } });
 }
 
+/**
+ * An endpoint limited to some mailboxes hears only mail to or from them.
+ * Unparseable or empty means no limit, as with eventTypes.
+ */
+export function matchesAddresses(addresses: string | null, data: unknown): boolean {
+  let list: string[];
+  try {
+    list = addresses ? JSON.parse(addresses) : [];
+  } catch {
+    return true;
+  }
+  if (!Array.isArray(list) || list.length === 0) return true;
+  const d = (data ?? {}) as Record<string, unknown>;
+  return [d.to, d.from].some((a) => typeof a === "string" && list.includes(a.toLowerCase()));
+}
+
 async function deliverToWebhooks(
   db: Db,
   orgId: string,
@@ -123,6 +139,7 @@ async function deliverToWebhooks(
         subscribed = ["*"];
       }
       if (!subscribed.includes("*") && !subscribed.includes(type)) return;
+      if (!matchesAddresses(hook.addresses, body.data)) return;
 
       const payload = webhookBody(hook.url, body);
       const signature = await sign(hook.secret, payload);

@@ -330,6 +330,8 @@ export const webhooks = sqliteTable(
     enabled: integer("enabled").notNull().default(1),
     orgId: text("org_id").notNull().default(""),
     createdAt: integer("created_at").notNull(),
+    /** JSON array of mailbox addresses; null means every mailbox in the org. */
+    addresses: text("addresses"),
   },
   (t) => [index("webhooks_org_idx").on(t.orgId)],
 );

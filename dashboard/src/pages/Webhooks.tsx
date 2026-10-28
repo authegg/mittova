@@ -76,6 +76,9 @@ export default function Webhooks() {
                       <td className="mono small truncate cell-strong">{h.url}</td>
                       <td className="small muted">
                         {types.includes("*") ? "all events" : types.join(", ")}
+                        {h.addresses && (
+                          <div className="truncate">{JSON.parse(h.addresses).join(", ")}</div>
+                        )}
                       </td>
                       <td>
                         <Badge tone={h.enabled ? "ok" : "neutral"}>

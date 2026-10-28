@@ -204,6 +204,7 @@ export interface Webhook {
   id: string;
   url: string;
   eventTypes: string;
+  addresses: string | null;
   secret: string;
   enabled: number;
   createdAt: number;

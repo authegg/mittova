@@ -1868,13 +1868,20 @@ api.get("/webhooks", async (c) => {
   return c.json({ webhooks: own, deliveries });
 });
 
+/** Stored lowercased to match the payload; an empty list means no limit. */
+function webhookAddresses(value: unknown): string | null {
+  if (!Array.isArray(value)) return null;
+  const list = value.map((a) => String(a).trim().toLowerCase()).filter(Boolean);
+  return list.length ? JSON.stringify(list) : null;
+}
+
 api.post("/webhooks", async (c) => {
   const scope = c.get("scope");
   const org = writeOrg(scope);
   if (!org) return c.json(PICK_ORG, 400);
 
   const db = drizzle(c.env.DB);
-  const body = await c.req.json<{ url?: string; eventTypes?: string[] }>();
+  const body = await c.req.json<{ url?: string; eventTypes?: string[]; addresses?: string[] }>();
   if (!body.url?.startsWith("https://")) {
     return c.json({ error: "The URL must be an https endpoint." }, 400);
   }
@@ -1883,6 +1890,7 @@ api.post("/webhooks", async (c) => {
     id: crypto.randomUUID(),
     url: body.url.trim(),
     eventTypes: JSON.stringify(body.eventTypes?.length ? body.eventTypes : ["*"]),
+    addresses: webhookAddresses(body.addresses),
     secret: `whsec_${[...secretBytes].map((b) => b.toString(16).padStart(2, "0")).join("")}`,
     enabled: 1,
     orgId: org,
@@ -1896,10 +1904,15 @@ api.post("/webhooks", async (c) => {
 api.patch("/webhooks/:id", async (c) => {
   const scope = c.get("scope");
   const db = drizzle(c.env.DB);
-  const body = await c.req.json<{ enabled?: boolean; eventTypes?: string[] }>();
+  const body = await c.req.json<{
+    enabled?: boolean;
+    eventTypes?: string[];
+    addresses?: string[] | null;
+  }>();
   const patch: Record<string, unknown> = {};
   if (typeof body.enabled === "boolean") patch.enabled = body.enabled ? 1 : 0;
   if (body.eventTypes) patch.eventTypes = JSON.stringify(body.eventTypes);
+  if (body.addresses !== undefined) patch.addresses = webhookAddresses(body.addresses);
   if (Object.keys(patch).length === 0) return c.json({ error: "Nothing to update." }, 400);
 
   const target = and(eq(webhooks.id, c.req.param("id")), orgFilter(scope, webhooks.orgId));
