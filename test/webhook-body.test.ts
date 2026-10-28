@@ -17,7 +17,9 @@ describe("webhookBody", () => {
   });
 
   it("sends every other endpoint the envelope unchanged", () => {
-    expect(webhookBody("https://example.com/discord.com/api/webhooks/1", event)).toBe(JSON.stringify(event));
+    expect(webhookBody("https://example.com/discord.com/api/webhooks/1", event)).toBe(
+      JSON.stringify(event),
+    );
   });
 });
 
@@ -25,11 +27,15 @@ describe("matchesAddresses", () => {
   const limited = JSON.stringify(["support@clodous.com", "hello@clodous.com"]);
 
   it("lets through mail to a listed mailbox, whatever its case", () => {
-    expect(matchesAddresses(limited, { to: "Support@Clodous.com", from: "a@example.com" })).toBe(true);
+    expect(matchesAddresses(limited, { to: "Support@Clodous.com", from: "a@example.com" })).toBe(
+      true,
+    );
   });
 
   it("drops mail to any other mailbox", () => {
-    expect(matchesAddresses(limited, { to: "dmarc@clodous.com", from: "noreply@google.com" })).toBe(false);
+    expect(matchesAddresses(limited, { to: "dmarc@clodous.com", from: "noreply@google.com" })).toBe(
+      false,
+    );
   });
 
   it("treats no list as every mailbox", () => {

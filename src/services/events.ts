@@ -87,7 +87,8 @@ function worthRetrying(statusCode: number | null): boolean {
  * ignores the signature header; every other endpoint gets the envelope as-is.
  */
 export function webhookBody(url: string, body: Record<string, unknown>): string {
-  if (!/^https:\/\/(\w+\.)?discord(app)?\.com\/api\/webhooks\//.test(url)) return JSON.stringify(body);
+  if (!/^https:\/\/(\w+\.)?discord(app)?\.com\/api\/webhooks\//.test(url))
+    return JSON.stringify(body);
   const data = (body.data ?? {}) as Record<string, unknown>;
   const lines = [
     `**${String(body.type)}** to ${String(data.to ?? "?")}`,
@@ -95,7 +96,10 @@ export function webhookBody(url: string, body: Record<string, unknown>): string 
     `Subject: ${String(data.subject ?? "(no subject)")}`,
   ];
   // allowed_mentions: a subject containing @everyone must not ping the channel.
-  return JSON.stringify({ content: lines.join("\n").slice(0, 2000), allowed_mentions: { parse: [] } });
+  return JSON.stringify({
+    content: lines.join("\n").slice(0, 2000),
+    allowed_mentions: { parse: [] },
+  });
 }
 
 /**
