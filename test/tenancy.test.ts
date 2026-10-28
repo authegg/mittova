@@ -559,15 +559,12 @@ describe("tenant export", () => {
 /**
  * Mailbox assignment, which is a tenant boundary in its own right.
  *
- * The routes used to filter requested mailbox ids through canUseMailbox, which
- * asks whether the *caller* may touch a mailbox. A platform administrator with
- * no org selected reaches every mailbox on the deployment, so an edit made from
- * the "All organizations" view happily gave one tenant's user a mailbox
- * belonging to another, and the row stuck.
- *
- * The boundary belongs to the account being edited, not to whoever is editing.
+ * An account may be granted mailboxes in other orgs, but only by a platform
+ * administrator on the "All organizations" view. Everyone else, including an
+ * admin acting inside one org, is bounded by the account's own tenant, and an
+ * org owner can neither see nor undo a grant made into another.
  */
-describe("mailbox assignment stays inside the account's tenant", () => {
+describe("mailbox assignment across tenants", () => {
   let admin: string;
 
   beforeEach(async () => {
@@ -614,17 +611,70 @@ describe("mailbox assignment stays inside the account's tenant", () => {
     expect(await assignedTo(id)).toEqual(["mb_org_alpha"]);
   });
 
-  it("refuses another tenant's mailbox on edit from the all-orgs view", async () => {
-    const id = await alphaMember(["mb_org_alpha"]);
-    // No x-mittova-org header at all: the admin is viewing every tenant, which
-    // is the vantage point that used to make this succeed.
-    const res = await call(
+  /** Grant from the all-orgs view: no x-mittova-org header at all. */
+  const grant = (id: string, mailboxIds: string[], cookie = admin, org?: string) =>
+    call(
       `/api/users/${id}`,
-      { method: "PATCH", body: json({ mailboxIds: ["mb_org_beta"] }) },
-      admin,
+      {
+        method: "PATCH",
+        body: json({ mailboxIds }),
+        headers: org ? { "x-mittova-org": org } : {},
+      },
+      cookie,
     );
-    expect(res.status).toBe(200);
-    expect(await assignedTo(id)).toEqual([]);
+
+  const visibleTo = async (cookie: string): Promise<string[]> =>
+    (await (await call("/api/mailboxes", {}, cookie)).json<{ id: string }[]>()).map((m) => m.id);
+
+  it("grants another tenant's mailbox from the all-orgs view, and it works", async () => {
+    const id = await alphaMember(["mb_org_alpha"]);
+    expect((await grant(id, ["mb_org_alpha", "mb_org_beta"])).status).toBe(200);
+    expect((await assignedTo(id)).sort()).toEqual(["mb_org_alpha", "mb_org_beta"]);
+
+    const member = await signIn("member@alpha.test", PASSWORD);
+    expect((await visibleTo(member)).sort()).toEqual(["mb_org_alpha", "mb_org_beta"]);
+    expect((await call("/api/messages?mailboxId=mb_org_beta", {}, member)).status).toBe(200);
+  });
+
+  it("refuses another tenant's mailbox from an admin acting inside one org", async () => {
+    const id = await alphaMember(["mb_org_alpha"]);
+    await grant(id, ["mb_org_alpha", "mb_org_beta"], admin, "org_alpha");
+    expect(await assignedTo(id)).toEqual(["mb_org_alpha"]);
+  });
+
+  it("refuses another tenant's mailbox from an org owner", async () => {
+    const owner = await makeOwner("org_alpha", "owner@alpha.test");
+    const id = await alphaMember();
+    expect((await grant(id, ["mb_org_alpha", "mb_org_beta"], owner)).status).toBe(200);
+    expect(await assignedTo(id)).toEqual(["mb_org_alpha"]);
+  });
+
+  it("hides a cross-org grant from the org owner, whose edits leave it in place", async () => {
+    const owner = await makeOwner("org_alpha", "owner@alpha.test");
+    const id = await alphaMember(["mb_org_alpha"]);
+    await grant(id, ["mb_org_alpha", "mb_org_beta"]);
+
+    const listed = await (
+      await call("/api/users", {}, owner)
+    ).json<{ id: string; mailboxIds: string[] }[]>();
+    expect(listed.find((u) => u.id === id)?.mailboxIds).toEqual(["mb_org_alpha"]);
+
+    // The owner clears what they can see; the grant they cannot see survives.
+    expect((await grant(id, [], owner)).status).toBe(200);
+    expect(await assignedTo(id)).toEqual(["mb_org_beta"]);
+  });
+
+  it("adds a cross-org grant to an owner's own mailboxes", async () => {
+    const owner = await makeOwner("org_alpha", "owner@alpha.test");
+    const listed = await (
+      await call("/api/users", {}, admin)
+    ).json<{ id: string; email: string }[]>();
+    const ownerId = listed.find((u) => u.email === "owner@alpha.test")!.id;
+    await grant(ownerId, ["mb_org_beta"]);
+    expect((await visibleTo(owner)).sort()).toEqual(["mb_org_alpha", "mb_org_beta"]);
+    // Still an alpha account: the grant reaches beta's mailbox, not its templates.
+    const tpls = await (await call("/api/templates", {}, owner)).json<{ id: string }[]>();
+    expect(tpls.map((t) => t.id)).toEqual(["tpl_org_alpha"]);
   });
 
   it("keeps an own-tenant mailbox assignable from the all-orgs view", async () => {
@@ -641,7 +691,12 @@ describe("mailbox assignment stays inside the account's tenant", () => {
     const id = await alphaMember();
     await call(
       `/api/users/${id}`,
-      { method: "PATCH", body: json({ mailboxIds: ["mb_org_alpha", "mb_org_beta"] }) },
+      {
+        method: "PATCH",
+        body: json({ mailboxIds: ["mb_org_alpha", "mb_org_beta"] }),
+        // Acting inside alpha, where beta's mailbox is refused.
+        headers: { "x-mittova-org": "org_alpha" },
+      },
       admin,
     );
     const audit = await (

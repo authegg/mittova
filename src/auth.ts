@@ -230,34 +230,34 @@ export async function resolveScope(c: Context<{ Bindings: Env }>): Promise<Scope
     };
   }
 
+  // Assignments may name mailboxes in other orgs. Only a platform administrator
+  // can make one of those (see the users routes), and it reaches the mailbox
+  // alone: templates, contacts and settings stay those of the home org.
+  const assigned = (
+    await db
+      .select({ mailboxId: userMailboxes.mailboxId })
+      .from(userMailboxes)
+      .where(eq(userMailboxes.userId, user.id))
+      .all()
+  ).map((a) => a.mailboxId);
+
   if (user.role === "owner") {
     return {
       ...base,
       role: "owner",
       orgId: user.orgId,
       isPlatformAdmin: false,
-      // An org owner sees everything in their own org and nothing outside it.
-      mailboxIds: await orgMailboxIds(db, user.orgId),
+      // Everything in their own org, plus any mailbox granted to them elsewhere.
+      mailboxIds: [...new Set([...(await orgMailboxIds(db, user.orgId)), ...assigned])],
     };
   }
-
-  const assigned = await db
-    .select({ mailboxId: userMailboxes.mailboxId })
-    .from(userMailboxes)
-    .where(eq(userMailboxes.userId, user.id))
-    .all();
-
-  // Intersected with the org's mailboxes rather than trusted outright, so an
-  // assignment left behind by a mailbox that changed hands cannot survive as a
-  // hole in the tenant boundary.
-  const withinOrg = new Set(await orgMailboxIds(db, user.orgId));
 
   return {
     ...base,
     role: "member",
     orgId: user.orgId,
     isPlatformAdmin: false,
-    mailboxIds: assigned.map((a) => a.mailboxId).filter((id) => withinOrg.has(id)),
+    mailboxIds: assigned,
   };
 }
 

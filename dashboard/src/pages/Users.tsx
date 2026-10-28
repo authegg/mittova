@@ -79,6 +79,7 @@ function UserForm({
   user,
   mailboxes,
   viewingOrgId,
+  isPlatformAdmin,
   onClose,
   onSaved,
 }: {
@@ -86,6 +87,7 @@ function UserForm({
   mailboxes: Mailbox[];
   /** The tenant in the switcher; empty when viewing every tenant at once. */
   viewingOrgId: string;
+  isPlatformAdmin: boolean;
   onClose: () => void;
   onSaved: (created?: { email: string; inviteToken: string | null; password: string }) => void;
 }) {
@@ -109,7 +111,14 @@ function UserForm({
    * with nothing to tell them apart.
    */
   const targetOrg = user?.orgId || viewingOrgId;
-  const choices = targetOrg ? mailboxes.filter((m) => m.orgId === targetOrg) : [];
+  // The one exception, matching the server: a platform administrator on "All
+  // organizations" may grant an existing account mailboxes from any org.
+  const crossOrg = Boolean(user) && isPlatformAdmin && !viewingOrgId;
+  const choices = crossOrg
+    ? mailboxes
+    : targetOrg
+      ? mailboxes.filter((m) => m.orgId === targetOrg)
+      : [];
 
   /** Grouped by domain, because a tenant with three domains is still a wall of
    *  addresses otherwise, and the domain is the part that disambiguates. */
@@ -253,7 +262,7 @@ function UserForm({
 
         <div className="field">
           <span>Mailboxes</span>
-          {role === "owner" ? (
+          {role === "owner" && !crossOrg ? (
             <div className="notice">Owners can already see every mailbox.</div>
           ) : !targetOrg ? (
             // Creating from the all-orgs view has no tenant to put the account
@@ -267,7 +276,11 @@ function UserForm({
           ) : (
             <div className="stack" style={{ gap: 10 }}>
               <div className="hint">
-                An account can only be given mailboxes from its own organization.
+                {crossOrg
+                  ? "Mailboxes from any organization. Templates and contacts stay those of the account's own."
+                  : isPlatformAdmin
+                    ? "Switch to All organizations to grant mailboxes from other organizations."
+                    : "An account can only be given mailboxes from its own organization."}
               </div>
               {byDomain.map(([domain, boxes]) => (
                 <div key={domain} className="stack" style={{ gap: 6 }}>
@@ -303,7 +316,13 @@ function inviteUrl(token: string): string {
   return `${window.location.origin}/#/accept/${token}`;
 }
 
-export default function Users({ mailboxes }: { mailboxes: Mailbox[] }) {
+export default function Users({
+  mailboxes,
+  isPlatformAdmin,
+}: {
+  mailboxes: Mailbox[];
+  isPlatformAdmin: boolean;
+}) {
   const toast = useToast();
   const list = useAsync(() => api.users(), []);
   const [creating, setCreating] = useState(false);
@@ -440,6 +459,7 @@ export default function Users({ mailboxes }: { mailboxes: Mailbox[] }) {
           user={editing}
           mailboxes={mailboxes}
           viewingOrgId={activeOrg()}
+          isPlatformAdmin={isPlatformAdmin}
           onClose={() => {
             setCreating(false);
             setEditing(null);

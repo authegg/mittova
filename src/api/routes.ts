@@ -162,6 +162,25 @@ async function mailboxesInOrg(
 }
 
 /**
+ * The mailboxes whose assignments this caller manages, as a predicate on
+ * mailboxes. A platform administrator on "All organizations" manages every
+ * one, which is the only way an account gets a mailbox outside its own org;
+ * anyone else manages the given org's alone, so an org owner can neither grant
+ * another tenant's mailbox nor see or undo a grant made into one.
+ */
+function grantable(scope: Scope, orgId: string) {
+  return scope.isPlatformAdmin && !scope.orgId ? undefined : eq(mailboxes.orgId, orgId);
+}
+
+/** The same bound, as a predicate on user_mailboxes rows. */
+function grantableLinks(db: ReturnType<typeof drizzle>, scope: Scope, orgId: string) {
+  const bound = grantable(scope, orgId);
+  return bound
+    ? inArray(userMailboxes.mailboxId, db.select({ id: mailboxes.id }).from(mailboxes).where(bound))
+    : undefined;
+}
+
+/**
  * Long enough that a person can act on it in their own time, short enough that
  * a forgotten invite in an inbox is not a standing way in.
  */
@@ -916,7 +935,8 @@ api.post("/send", async (c) => {
       db,
       c.env,
       {
-        orgId: scope.orgId || undefined,
+        // The mailbox's own org, which sendEmail derives from it. canUseMailbox
+        // has authorised it, and it may be a cross-org grant outside scope.orgId.
         mailboxId,
         to: asArray(body.to),
         cc: asArray(body.cc),
@@ -1190,11 +1210,15 @@ api.get("/users", async (c) => {
     .orderBy(users.email)
     .all();
 
-  // Only the listed users' links, so the map cannot carry an assignment
-  // belonging to somebody in another tenant.
+  // Only the listed users' links, and only to mailboxes this caller manages,
+  // so the map cannot reveal another tenant's mailbox granted to one of them.
   const ids = rows.map((u) => u.id);
   const links = ids.length
-    ? await db.select().from(userMailboxes).where(inArray(userMailboxes.userId, ids)).all()
+    ? await db
+        .select()
+        .from(userMailboxes)
+        .where(and(inArray(userMailboxes.userId, ids), grantableLinks(db, scope, scope.orgId)))
+        .all()
     : [];
   const byUser = new Map<string, string[]>();
   for (const l of links) {
@@ -1325,11 +1349,22 @@ api.patch("/users/:id", async (c) => {
     audit(db, scope, "user.update", target.email, what, c.executionCtx);
   }
   if (body.mailboxIds) {
-    // Bounded by the target account's own tenant rather than by the caller's
-    // reach: a platform administrator on "All organizations" reaches every
-    // mailbox, and filtering by that let this route move one across.
-    const allowed = await mailboxesInOrg(db, body.mailboxIds, target.orgId);
-    await db.delete(userMailboxes).where(eq(userMailboxes.userId, id));
+    // Bounded by the target account's own tenant, except for a platform
+    // administrator on "All organizations", who may grant any mailbox. Only the
+    // links inside that bound are replaced, so an owner's edit leaves a
+    // cross-org grant they cannot see in place.
+    const allowed = body.mailboxIds.length
+      ? (
+          await db
+            .select({ id: mailboxes.id })
+            .from(mailboxes)
+            .where(and(inArray(mailboxes.id, body.mailboxIds), grantable(scope, target.orgId)))
+            .all()
+        ).map((r) => r.id)
+      : [];
+    await db
+      .delete(userMailboxes)
+      .where(and(eq(userMailboxes.userId, id), grantableLinks(db, scope, target.orgId)));
     if (allowed.length > 0) {
       await db
         .insert(userMailboxes)

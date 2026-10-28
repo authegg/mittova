@@ -250,7 +250,9 @@ function Shell() {
         )}
 
         {isOwner && page === "domains" && <Domains isDemo={demo !== null} />}
-        {isOwner && page === "users" && <Users mailboxes={mailboxes} />}
+        {isOwner && page === "users" && (
+          <Users mailboxes={mailboxes} isPlatformAdmin={Boolean(me?.isPlatformAdmin)} />
+        )}
         {isOwner && page === "keys" && <ApiKeys mailboxes={mailboxes} />}
         {isOwner && page === "webhooks" && <Webhooks />}
         {isOwner &&
