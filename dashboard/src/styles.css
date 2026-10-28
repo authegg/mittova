@@ -49,12 +49,18 @@
   --z-modal: 70;
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Native controls (select popups, scrollbars, date pickers) follow this, not
+     the tokens. Left unset they follow the OS, so a light page on a dark OS
+     drew near-white option text on a white dropdown. */
+  color-scheme: light;
 }
 
 /* Follows the OS unless data-theme pins it; the explicit selector below wins
    in both directions so the toggle can override the system preference. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --canvas: #121211;
     --surface: #191918;
     --surface-sunk: #1f1e1d;
@@ -77,6 +83,7 @@
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --canvas: #121211;
   --surface: #191918;
   --surface-sunk: #1f1e1d;
@@ -1103,7 +1110,8 @@ pre.body-plain {
 }
 .toast.bad {
   background: var(--bad-ink);
-  color: #fff;
+  /* Not #fff: dark mode's --bad-ink is a light pink. */
+  color: var(--surface);
 }
 
 /* --------------------------------------------------------------- login --- */
