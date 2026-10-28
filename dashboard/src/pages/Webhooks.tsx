@@ -60,7 +60,7 @@ export default function Webhooks() {
                   <th>URL</th>
                   <th style={{ width: 230 }}>Events</th>
                   <th style={{ width: 90 }}>State</th>
-                  <th style={{ width: 150 }} />
+                  <th className="actions" style={{ width: 210 }} />
                 </tr>
               </thead>
               <tbody>
@@ -82,7 +82,7 @@ export default function Webhooks() {
                           {h.enabled ? "active" : "paused"}
                         </Badge>
                       </td>
-                      <td>
+                      <td className="actions">
                         <div className="row">
                           <button className="sm" onClick={() => setInspecting(h)}>
                             Secret
@@ -98,6 +98,7 @@ export default function Webhooks() {
                           </button>
                           <button
                             className="danger sm"
+                            aria-label="Remove endpoint"
                             onClick={async () => {
                               await api.deleteWebhook(h.id);
                               state.reload();
