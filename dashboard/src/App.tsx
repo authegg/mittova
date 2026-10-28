@@ -263,7 +263,9 @@ function Shell() {
             <Templates />
           ))}
         {isOwner && page === "contacts" && <Contacts onCompose={startCompose} />}
-        {isOwner && page === "suppressions" && <Suppressions />}
+        {isOwner && page === "suppressions" && (
+          <Suppressions isPlatformAdmin={Boolean(me?.isPlatformAdmin)} />
+        )}
         {isOwner && page === "audit" && <Audit />}
         {me?.isPlatformAdmin && page === "orgs" && <Orgs />}
         {isOwner && page === "settings" && (

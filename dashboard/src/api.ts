@@ -264,6 +264,7 @@ export interface Suppression {
   email: string;
   reason: "bounce" | "complaint" | "manual";
   detail: string;
+  orgId: string;
   createdAt: number;
 }
 
