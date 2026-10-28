@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { api, type Webhook } from "../api";
+import { activeOrg, api, type Webhook } from "../api";
 import { useAsync, useToast } from "../hooks";
 import {
   Badge,
@@ -18,6 +18,7 @@ export default function Webhooks() {
   const toast = useToast();
   const state = useAsync(() => api.webhooks(), []);
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<Webhook | null>(null);
   const [inspecting, setInspecting] = useState<Webhook | null>(null);
 
   const hooks = state.data?.webhooks ?? [];
@@ -60,7 +61,7 @@ export default function Webhooks() {
                   <th>URL</th>
                   <th style={{ width: 230 }}>Events</th>
                   <th style={{ width: 90 }}>State</th>
-                  <th className="actions" style={{ width: 210 }} />
+                  <th className="actions" style={{ width: 270 }} />
                 </tr>
               </thead>
               <tbody>
@@ -77,7 +78,7 @@ export default function Webhooks() {
                       <td className="small muted">
                         {types.includes("*") ? "all events" : types.join(", ")}
                         {h.addresses && (
-                          <div className="truncate">{JSON.parse(h.addresses).join(", ")}</div>
+                          <div className="truncate">{parseList(h.addresses).join(", ")}</div>
                         )}
                       </td>
                       <td>
@@ -87,6 +88,9 @@ export default function Webhooks() {
                       </td>
                       <td className="actions">
                         <div className="row">
+                          <button className="sm" onClick={() => setEditing(h)}>
+                            Edit
+                          </button>
                           <button className="sm" onClick={() => setInspecting(h)}>
                             Secret
                           </button>
@@ -165,13 +169,18 @@ export default function Webhooks() {
         )}
       </Card>
 
-      {creating && (
-        <CreateHook
-          onClose={() => setCreating(false)}
-          onCreated={() => {
+      {(creating || editing) && (
+        <HookSheet
+          hook={editing}
+          onClose={() => {
             setCreating(false);
+            setEditing(null);
+          }}
+          onSaved={() => {
+            toast(editing ? "Endpoint updated" : "Endpoint added");
+            setCreating(false);
+            setEditing(null);
             state.reload();
-            toast("Endpoint added");
           }}
         />
       )}
@@ -216,19 +225,48 @@ const valid = crypto.timingSafeEqual(
   );
 }
 
-function CreateHook({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-  const [url, setUrl] = useState("https://");
-  const [selected, setSelected] = useState<string[]>([]);
+function parseList(json: string | null | undefined): string[] {
+  try {
+    const v = json ? JSON.parse(json) : [];
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function HookSheet({
+  hook,
+  onClose,
+  onSaved,
+}: {
+  hook: Webhook | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [url, setUrl] = useState(hook?.url ?? "https://");
+  const [selected, setSelected] = useState<string[]>(() =>
+    parseList(hook?.eventTypes).filter((t) => t !== "*"),
+  );
+  const [addresses, setAddresses] = useState<string[]>(() => parseList(hook?.addresses));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const mailboxState = useAsync(() => api.mailboxes(), []);
+
+  // Only the endpoint's own org: its webhook never hears another tenant's mail.
+  const targetOrg = hook?.orgId || activeOrg();
+  const choices = (mailboxState.data ?? []).filter((m) => m.orgId === targetOrg);
+  // A listed address whose mailbox is gone can never fire; saving drops it.
+  const kept = addresses.filter((a) => choices.some((m) => m.address === a));
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
+    const events = selected.length ? selected : ["*"];
     try {
-      await api.createWebhook(url, selected.length ? selected : ["*"]);
-      onCreated();
+      if (hook) await api.updateWebhook(hook.id, { eventTypes: events, addresses: kept });
+      else await api.createWebhook(url, events, kept);
+      onSaved();
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
@@ -237,12 +275,12 @@ function CreateHook({ onClose, onCreated }: { onClose: () => void; onCreated: ()
 
   return (
     <Sheet
-      title="Add endpoint"
+      title={hook ? "Edit endpoint" : "Add endpoint"}
       onClose={onClose}
       footer={
         <>
           <button className="primary" form="new-hook" type="submit" disabled={busy}>
-            {busy ? "Adding" : "Add endpoint"}
+            {hook ? (busy ? "Saving" : "Save") : busy ? "Adding" : "Add endpoint"}
           </button>
           <button onClick={onClose}>Cancel</button>
         </>
@@ -252,8 +290,18 @@ function CreateHook({ onClose, onCreated }: { onClose: () => void; onCreated: ()
         {error && <div className="notice bad">{error}</div>}
         <label className="field">
           <span>Endpoint URL</span>
-          <input value={url} onChange={(e) => setUrl(e.target.value)} className="mono" autoFocus />
-          <span className="hint">Must be https. Requests time out after 10 seconds.</span>
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="mono"
+            readOnly={Boolean(hook)}
+            autoFocus={!hook}
+          />
+          <span className="hint">
+            {hook
+              ? "To point at a different URL, add a new endpoint and remove this one."
+              : "Must be https. Requests time out after 10 seconds."}
+          </span>
         </label>
 
         <div className="field">
@@ -274,6 +322,38 @@ function CreateHook({ onClose, onCreated }: { onClose: () => void; onCreated: ()
             ))}
           </div>
           <span className="hint">Select none to receive every event type.</span>
+        </div>
+
+        <div className="field">
+          <span>Mailboxes</span>
+          {mailboxState.loading ? (
+            <span className="hint">Loading mailboxes…</span>
+          ) : choices.length === 0 ? (
+            <span className="hint">
+              {targetOrg
+                ? "This organization has no mailboxes yet."
+                : "Choose an organization in the switcher to limit this to its mailboxes."}
+            </span>
+          ) : (
+            <div className="stack" style={{ gap: 6 }}>
+              {choices.map((m) => (
+                <label key={m.id} className="row" style={{ gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    style={{ width: "auto" }}
+                    checked={addresses.includes(m.address)}
+                    onChange={(e) =>
+                      setAddresses((s) =>
+                        e.target.checked ? [...s, m.address] : s.filter((x) => x !== m.address),
+                      )
+                    }
+                  />
+                  <span className="mono small">{m.address}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          <span className="hint">Select none to hear about mail to every mailbox.</span>
         </div>
       </form>
     </Sheet>

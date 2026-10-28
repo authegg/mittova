@@ -1868,11 +1868,28 @@ api.get("/webhooks", async (c) => {
   return c.json({ webhooks: own, deliveries });
 });
 
-/** Stored lowercased to match the payload; an empty list means no limit. */
-function webhookAddresses(value: unknown): string | null {
-  if (!Array.isArray(value)) return null;
-  const list = value.map((a) => String(a).trim().toLowerCase()).filter(Boolean);
-  return list.length ? JSON.stringify(list) : null;
+/**
+ * Stored lowercased to match the payload; an empty list means no limit. Every
+ * address must be a mailbox of the endpoint's own org: one that is not can
+ * never receive mail, so the filter would silently never fire for it.
+ */
+async function webhookAddresses(
+  db: ReturnType<typeof drizzle>,
+  orgId: string,
+  value: unknown,
+): Promise<{ value: string | null } | { error: string }> {
+  if (!Array.isArray(value)) return { value: null };
+  const list = [...new Set(value.map((a) => String(a).trim().toLowerCase()).filter(Boolean))];
+  if (list.length === 0) return { value: null };
+  const owned = await db
+    .select({ address: mailboxes.address })
+    .from(mailboxes)
+    .where(and(eq(mailboxes.orgId, orgId), inArray(mailboxes.address, list)))
+    .all();
+  const known = new Set(owned.map((m) => m.address.toLowerCase()));
+  const missing = list.filter((a) => !known.has(a));
+  if (missing.length) return { error: `${missing.join(", ")} is not a mailbox on this account.` };
+  return { value: JSON.stringify(list) };
 }
 
 api.post("/webhooks", async (c) => {
@@ -1885,12 +1902,14 @@ api.post("/webhooks", async (c) => {
   if (!body.url?.startsWith("https://")) {
     return c.json({ error: "The URL must be an https endpoint." }, 400);
   }
+  const addresses = await webhookAddresses(db, org, body.addresses);
+  if ("error" in addresses) return c.json({ error: addresses.error }, 400);
   const secretBytes = crypto.getRandomValues(new Uint8Array(24));
   const row = {
     id: crypto.randomUUID(),
     url: body.url.trim(),
     eventTypes: JSON.stringify(body.eventTypes?.length ? body.eventTypes : ["*"]),
-    addresses: webhookAddresses(body.addresses),
+    addresses: addresses.value,
     secret: `whsec_${[...secretBytes].map((b) => b.toString(16).padStart(2, "0")).join("")}`,
     enabled: 1,
     orgId: org,
@@ -1912,12 +1931,17 @@ api.patch("/webhooks/:id", async (c) => {
   const patch: Record<string, unknown> = {};
   if (typeof body.enabled === "boolean") patch.enabled = body.enabled ? 1 : 0;
   if (body.eventTypes) patch.eventTypes = JSON.stringify(body.eventTypes);
-  if (body.addresses !== undefined) patch.addresses = webhookAddresses(body.addresses);
-  if (Object.keys(patch).length === 0) return c.json({ error: "Nothing to update." }, 400);
+  if (Object.keys(patch).length === 0 && body.addresses === undefined) {
+    return c.json({ error: "Nothing to update." }, 400);
+  }
 
   const target = and(eq(webhooks.id, c.req.param("id")), orgFilter(scope, webhooks.orgId));
-  if (!(await db.select({ id: webhooks.id }).from(webhooks).where(target).get())) {
-    return c.json({ error: "Not found." }, 404);
+  const hook = await db.select({ orgId: webhooks.orgId }).from(webhooks).where(target).get();
+  if (!hook) return c.json({ error: "Not found." }, 404);
+  if (body.addresses !== undefined) {
+    const addresses = await webhookAddresses(db, hook.orgId, body.addresses);
+    if ("error" in addresses) return c.json({ error: addresses.error }, 400);
+    patch.addresses = addresses.value;
   }
   await db.update(webhooks).set(patch).where(target);
   return c.json({ ok: true });

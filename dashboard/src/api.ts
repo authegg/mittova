@@ -204,7 +204,9 @@ export interface Webhook {
   id: string;
   url: string;
   eventTypes: string;
+  /** JSON array of mailbox addresses; null means every mailbox in the org. */
   addresses: string | null;
+  orgId: string;
   secret: string;
   enabled: number;
   createdAt: number;
@@ -493,10 +495,12 @@ export const api = {
   deleteApiKey: (id: string) => request<{ ok: true }>(`/api-keys/${id}`, { method: "DELETE" }),
 
   webhooks: () => request<{ webhooks: Webhook[]; deliveries: WebhookDelivery[] }>("/webhooks"),
-  createWebhook: (url: string, eventTypes: string[]) =>
-    request<Webhook>("/webhooks", { method: "POST", body: body({ url, eventTypes }) }),
-  updateWebhook: (id: string, patch: { enabled?: boolean; eventTypes?: string[] }) =>
-    request<{ ok: true }>(`/webhooks/${id}`, { method: "PATCH", body: body(patch) }),
+  createWebhook: (url: string, eventTypes: string[], addresses: string[]) =>
+    request<Webhook>("/webhooks", { method: "POST", body: body({ url, eventTypes, addresses }) }),
+  updateWebhook: (
+    id: string,
+    patch: { enabled?: boolean; eventTypes?: string[]; addresses?: string[] },
+  ) => request<{ ok: true }>(`/webhooks/${id}`, { method: "PATCH", body: body(patch) }),
   deleteWebhook: (id: string) => request<{ ok: true }>(`/webhooks/${id}`, { method: "DELETE" }),
 
   templates: (withPreview = false) =>

@@ -706,3 +706,43 @@ describe("mailbox assignment across tenants", () => {
     expect(entry?.detail).toBe("1 assigned");
   });
 });
+
+/**
+ * A webhook limited to mailboxes may only name its own org's real ones. An
+ * address that is not a mailbox there can never receive mail, so the filter
+ * would accept it and then silently never fire.
+ */
+describe("webhook mailbox filter", () => {
+  let alpha: string;
+
+  beforeEach(async () => {
+    await seed();
+    alpha = await makeOwner("org_alpha", "owner@alpha.test");
+  });
+
+  const create = (addresses: string[]) =>
+    call(
+      "/api/webhooks",
+      { method: "POST", body: json({ url: "https://alpha.invalid/hook", addresses }) },
+      alpha,
+    );
+
+  it("rejects an address that is not one of its own mailboxes", async () => {
+    expect((await create(["nobody@alpha.test"])).status, "nonexistent mailbox").toBe(400);
+    expect((await create(["desk@beta.test"])).status, "another tenant's mailbox").toBe(400);
+  });
+
+  it("accepts its own mailbox and keeps the check on edit", async () => {
+    const res = await create(["Desk@alpha.test"]);
+    expect(res.status).toBe(201);
+    const hook = (await res.json()) as { id: string; addresses: string };
+    expect(JSON.parse(hook.addresses)).toEqual(["desk@alpha.test"]);
+
+    const patch = await call(
+      `/api/webhooks/${hook.id}`,
+      { method: "PATCH", body: json({ addresses: ["desk@beta.test"] }) },
+      alpha,
+    );
+    expect(patch.status).toBe(400);
+  });
+});
