@@ -55,6 +55,7 @@ import {
   recordFailure,
   type Limit,
 } from "../services/ratelimit";
+import { passesTurnstile, turnstileSiteKey } from "../services/turnstile";
 import { hashPassword, passwordProblem } from "../services/password";
 import {
   createRoutingRule,
@@ -243,9 +244,14 @@ function seenExpr(scope: Scope) {
  */
 const LOGIN_LIMIT_ACCOUNT: Limit = { max: 8, windowSeconds: 15 * 60 };
 const LOGIN_LIMIT_IP: Limit = { max: 30, windowSeconds: 15 * 60 };
+const TURNSTILE_FAILED = "The verification check failed. Try again.";
 
 api.post("/auth/login", async (c) => {
-  const { email, password } = await c.req.json<{ email?: string; password?: string }>();
+  const { email, password, turnstileToken } = await c.req.json<{
+    email?: string;
+    password?: string;
+    turnstileToken?: string;
+  }>();
   if (!password) return c.json({ error: "Password is required." }, 400);
 
   const account = (email ?? "__admin__").trim().toLowerCase();
@@ -280,6 +286,12 @@ api.post("/auth/login", async (c) => {
         "retry-after": String(check.retryAfter),
       });
     }
+  }
+
+  // After the limit, so a locked-out caller costs no siteverify call, and before
+  // the password, so a bot never learns whether it guessed right.
+  if (!(await passesTurnstile(c.env, turnstileToken, ip))) {
+    return c.json({ error: TURNSTILE_FAILED }, 400);
   }
 
   const result = await login(c, email, password);
@@ -318,6 +330,7 @@ api.get("/auth/me", async (c) => {
       signature: scope.signature,
     },
     routingAutomated: routingConfigured(c.env),
+    turnstileSiteKey: turnstileSiteKey(c.env),
     /**
      * Present only on the public demo, and the only thing that tells the
      * dashboard it is one. Null everywhere else, so no real deployment can
@@ -339,7 +352,11 @@ api.get("/auth/me", async (c) => {
  * is cleared on use so a forwarded invite mail cannot be replayed.
  */
 api.post("/auth/accept", async (c) => {
-  const { token, password } = await c.req.json<{ token?: string; password?: string }>();
+  const { token, password, turnstileToken } = await c.req.json<{
+    token?: string;
+    password?: string;
+    turnstileToken?: string;
+  }>();
   if (!token) return c.json({ error: "This invite link is missing its token." }, 400);
 
   const problem = passwordProblem(password ?? "");
@@ -354,6 +371,9 @@ api.post("/auth/accept", async (c) => {
     return c.json({ error: "Too many attempts. Try again later." }, 429, {
       "retry-after": String(check.retryAfter),
     });
+  }
+  if (!(await passesTurnstile(c.env, turnstileToken, ip))) {
+    return c.json({ error: TURNSTILE_FAILED }, 400);
   }
 
   const db = drizzle(c.env.DB);

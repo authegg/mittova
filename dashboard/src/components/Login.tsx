@@ -1,8 +1,17 @@
 import { useState, type FormEvent } from "react";
 import { api, type DemoInfo } from "../api";
 import Icon from "./Icon";
+import Turnstile from "./Turnstile";
 
-export default function Login({ demo, onAuthed }: { demo: DemoInfo | null; onAuthed: () => void }) {
+export default function Login({
+  demo,
+  turnstileSiteKey,
+  onAuthed,
+}: {
+  demo: DemoInfo | null;
+  turnstileSiteKey: string | null;
+  onAuthed: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState(demo?.password ?? "");
   /**
@@ -14,17 +23,22 @@ export default function Login({ demo, onAuthed }: { demo: DemoInfo | null; onAut
   const [adminMode, setAdminMode] = useState(demo !== null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaRound, setCaptchaRound] = useState(0);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      await api.login(adminMode ? undefined : email, password);
+      await api.login(adminMode ? undefined : email, password, captcha ?? undefined);
       onAuthed();
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
+      // A token is spent once checked, so fetch a new one.
+      setCaptcha(null);
+      setCaptchaRound((n) => n + 1);
     }
   }
 
@@ -81,7 +95,15 @@ export default function Login({ demo, onAuthed }: { demo: DemoInfo | null; onAut
               />
             </label>
 
-            <button className="primary" type="submit" disabled={busy || !password}>
+            {turnstileSiteKey && (
+              <Turnstile key={captchaRound} siteKey={turnstileSiteKey} onToken={setCaptcha} />
+            )}
+
+            <button
+              className="primary"
+              type="submit"
+              disabled={busy || !password || (turnstileSiteKey !== null && !captcha)}
+            >
               {busy ? "Signing in" : "Sign in"}
             </button>
 

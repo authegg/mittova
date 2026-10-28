@@ -74,6 +74,8 @@ export interface Me {
   domains: string[];
   user: SessionUser | null;
   routingAutomated: boolean;
+  /** Set when sign-in and invite acceptance need a Turnstile token. */
+  turnstileSiteKey: string | null;
   demo: DemoInfo | null;
 }
 
@@ -348,8 +350,11 @@ export const api = {
    * header like everything else rather than naming one.
    */
   exportUrl: () => "/api/export",
-  login: (email: string | undefined, password: string) =>
-    request<{ ok: true }>("/auth/login", { method: "POST", body: body({ email, password }) }),
+  login: (email: string | undefined, password: string, turnstileToken?: string) =>
+    request<{ ok: true }>("/auth/login", {
+      method: "POST",
+      body: body({ email, password, turnstileToken }),
+    }),
   logout: () => request<{ ok: true }>("/auth/logout", { method: "POST" }),
   changePassword: (password: string) =>
     request<{ ok: true }>("/auth/password", { method: "POST", body: body({ password }) }),
@@ -359,10 +364,10 @@ export const api = {
   users: () => request<User[]>("/users"),
   invitePreview: (token: string) =>
     request<{ email: string; name: string }>(`/auth/invite/${encodeURIComponent(token)}`),
-  acceptInvite: (token: string, password: string) =>
+  acceptInvite: (token: string, password: string, turnstileToken?: string) =>
     request<{ ok: true; email: string }>("/auth/accept", {
       method: "POST",
-      body: body({ token, password }),
+      body: body({ token, password, turnstileToken }),
     }),
   reinvite: (id: string) =>
     request<{ inviteToken: string; email: string }>(`/users/${id}/invite`, { method: "POST" }),

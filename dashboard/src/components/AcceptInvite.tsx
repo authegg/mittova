@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api } from "../api";
 import Icon from "./Icon";
+import Turnstile from "./Turnstile";
 
 /**
  * Accepting an invite, which happens before there is any session.
@@ -14,9 +15,11 @@ import Icon from "./Icon";
  */
 export default function AcceptInvite({
   token,
+  turnstileSiteKey,
   onAccepted,
 }: {
   token: string;
+  turnstileSiteKey: string | null;
   onAccepted: () => void;
 }) {
   const [who, setWho] = useState<{ email: string; name: string } | null>(null);
@@ -24,6 +27,8 @@ export default function AcceptInvite({
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaRound, setCaptchaRound] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,12 +52,15 @@ export default function AcceptInvite({
     setBusy(true);
     setError(null);
     try {
-      await api.acceptInvite(token, password);
+      await api.acceptInvite(token, password, captcha ?? undefined);
       // Accepting signs them in, so there is nothing left to type.
       onAccepted();
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
+      // A token is spent once checked, so fetch a new one.
+      setCaptcha(null);
+      setCaptchaRound((n) => n + 1);
     }
   }
 
@@ -111,7 +119,15 @@ export default function AcceptInvite({
               />
             </label>
 
-            <button className="primary" type="submit" disabled={busy || !password}>
+            {turnstileSiteKey && (
+              <Turnstile key={captchaRound} siteKey={turnstileSiteKey} onToken={setCaptcha} />
+            )}
+
+            <button
+              className="primary"
+              type="submit"
+              disabled={busy || !password || (turnstileSiteKey !== null && !captcha)}
+            >
               {busy ? "Setting up" : "Set password and sign in"}
             </button>
           </form>

@@ -246,6 +246,9 @@ recomputed one, so a layout change cannot orphan existing objects.
   `scripts/tenant-isolation.mjs` stands up a second tenant against a running deployment and
   asserts sixteen ways across the boundary are refused.
 - **Login is rate limited** per address and per IP.
+- **Turnstile, optionally**, on sign-in and invite acceptance. Create a widget for your
+  dashboard's hostname, then `wrangler secret put TURNSTILE_SITE_KEY` and
+  `wrangler secret put TURNSTILE_SECRET_KEY`. With either one unset it stays off.
 - **Backups contain secrets.** The nightly export includes password hashes, API key hashes and
   webhook signing secrets, because a restore that omitted them would lock everyone out. Keep the
   R2 bucket private and treat the files as credentials.

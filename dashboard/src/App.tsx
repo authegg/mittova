@@ -80,6 +80,7 @@ function Shell() {
   const [domains, setDomains] = useState<string[]>([]);
   const [me, setMe] = useState<SessionUser | null>(null);
   const [demo, setDemo] = useState<DemoInfo | null>(null);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState<string | null>(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [route, navigate] = useRoute();
@@ -93,6 +94,7 @@ function Shell() {
     setDomains(m.domains);
     setMe(m.user);
     setDemo(m.demo);
+    setTurnstileSiteKey(m.turnstileSiteKey);
     if (m.user?.mustChangePassword) setShowChangePassword(true);
   }, []);
 
@@ -148,6 +150,7 @@ function Shell() {
       return (
         <AcceptInvite
           token={sub[0]}
+          turnstileSiteKey={turnstileSiteKey}
           onAccepted={() => {
             window.location.hash = "/overview";
             api.me().then(applySession);
@@ -155,7 +158,13 @@ function Shell() {
         />
       );
     }
-    return <Login demo={demo} onAuthed={() => api.me().then(applySession)} />;
+    return (
+      <Login
+        demo={demo}
+        turnstileSiteKey={turnstileSiteKey}
+        onAuthed={() => api.me().then(applySession)}
+      />
+    );
   }
 
   return (

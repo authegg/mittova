@@ -23,4 +23,11 @@ interface Env {
    * deployment that has not asked for it.
    */
   ALERT_EMAIL?: string;
+  /**
+   * Cloudflare Turnstile on sign-in and invite acceptance. Both or neither: with
+   * only one set, Turnstile stays off. The site key is public, it is a secret
+   * only so one `wrangler secret put` covers both.
+   */
+  TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET_KEY?: string;
 }
