@@ -97,8 +97,13 @@ export default function Webhooks() {
                           <button
                             className="sm"
                             onClick={async () => {
-                              await api.updateWebhook(h.id, { enabled: !h.enabled });
-                              state.reload();
+                              try {
+                                await api.updateWebhook(h.id, { enabled: !h.enabled });
+                                toast(h.enabled ? "Endpoint paused" : "Endpoint resumed");
+                                state.reload();
+                              } catch (err) {
+                                toast((err as Error).message, "bad");
+                              }
                             }}
                           >
                             {h.enabled ? "Pause" : "Resume"}
@@ -107,9 +112,13 @@ export default function Webhooks() {
                             className="danger sm"
                             aria-label="Remove endpoint"
                             onClick={async () => {
-                              await api.deleteWebhook(h.id);
-                              state.reload();
-                              toast("Endpoint removed");
+                              try {
+                                await api.deleteWebhook(h.id);
+                                toast("Endpoint removed");
+                                state.reload();
+                              } catch (err) {
+                                toast((err as Error).message, "bad");
+                              }
                             }}
                           >
                             <Icon name="trash" size={13} />
