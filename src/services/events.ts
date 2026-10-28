@@ -81,6 +81,23 @@ function worthRetrying(statusCode: number | null): boolean {
   return statusCode === 429 || statusCode >= 500;
 }
 
+/**
+ * Discord rejects any body without `content` or `embeds`, so its incoming
+ * webhooks get a readable one-liner instead of the event envelope. Discord
+ * ignores the signature header; every other endpoint gets the envelope as-is.
+ */
+export function webhookBody(url: string, body: Record<string, unknown>): string {
+  if (!/^https:\/\/(\w+\.)?discord(app)?\.com\/api\/webhooks\//.test(url)) return JSON.stringify(body);
+  const data = (body.data ?? {}) as Record<string, unknown>;
+  const lines = [
+    `**${String(body.type)}** to ${String(data.to ?? "?")}`,
+    `From: ${String(data.from ?? "?")}`,
+    `Subject: ${String(data.subject ?? "(no subject)")}`,
+  ];
+  // allowed_mentions: a subject containing @everyone must not ping the channel.
+  return JSON.stringify({ content: lines.join("\n").slice(0, 2000), allowed_mentions: { parse: [] } });
+}
+
 async function deliverToWebhooks(
   db: Db,
   orgId: string,
@@ -97,8 +114,6 @@ async function deliverToWebhooks(
     .all();
   if (hooks.length === 0) return;
 
-  const payload = JSON.stringify(body);
-
   await Promise.all(
     hooks.map(async (hook) => {
       let subscribed: string[];
@@ -109,6 +124,7 @@ async function deliverToWebhooks(
       }
       if (!subscribed.includes("*") && !subscribed.includes(type)) return;
 
+      const payload = webhookBody(hook.url, body);
       const signature = await sign(hook.secret, payload);
       const started = Date.now();
       let statusCode: number | null = null;
