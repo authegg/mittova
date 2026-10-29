@@ -109,6 +109,10 @@ export async function mailInvite(
     link: invite.url,
   };
   const htmlVars = Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, escapeHtml(v)]));
+  // Gmail turns anything shaped like a domain or an address into a blue link,
+  // so "clodous.com" read as a link to a website. A zero-width non-joiner before
+  // each . and @ is invisible and breaks the match. The link is left alone.
+  for (const k of ["org", "email"]) htmlVars[k] = htmlVars[k].replace(/[.@]/g, "\u200c$&");
   const html = tpl.bodyHtml
     ? sanitiseEmailHtml(renderTemplate(tpl.bodyHtml, htmlVars), { layout: true })
     : undefined;

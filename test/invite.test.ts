@@ -87,6 +87,8 @@ describe("invite mail", () => {
     // The built-in design: the button survives the layout sanitiser.
     const html = (send.mock.calls[0] as unknown[] as [{ html: string; subject: string }])[0];
     expect(html.subject).toBe("Your Alpha mail account");
+    // Not linkified by Gmail: the address is broken up with an invisible joiner.
+    expect(html.html).toContain("new\u200c@person\u200c.test");
     expect(html.html).toContain(`href="https://mail.example/#/accept/${made.inviteToken}"`);
   });
 
