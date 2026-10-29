@@ -7,6 +7,18 @@ import Icon from "../components/Icon";
 export default function Templates() {
   const toast = useToast();
   const list = useAsync(() => api.templates(true), []);
+  const hasInvite = (list.data ?? []).some((t) => t.slug === "user-invite");
+
+  /** Copies the built-in invite email into an editable template of this org's. */
+  async function customiseInvite() {
+    try {
+      const [starter] = await api.templateStarters();
+      const made = await api.createTemplate(starter);
+      window.location.hash = `/templates/${made.id}`;
+    } catch (err) {
+      toast((err as Error).message, "bad");
+    }
+  }
 
   return (
     <>
@@ -23,6 +35,18 @@ export default function Templates() {
           <Icon name="plus" size={14} /> New template
         </a>
       </div>
+
+      {!list.loading && !hasInvite && (
+        <div className="notice row" style={{ justifyContent: "space-between", marginBottom: 18 }}>
+          <span>
+            Invites to new users use the built-in email. Customise it to change the wording, the
+            design or the sender.
+          </span>
+          <button className="sm" onClick={customiseInvite}>
+            Customise the invite email
+          </button>
+        </div>
+      )}
 
       {list.loading ? (
         <Card tight>

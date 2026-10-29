@@ -535,6 +535,10 @@ export const api = {
     fromAddress?: string;
     replyTo?: string;
   }) => request<Template>("/templates", { method: "POST", body: body(t) }),
+  templateStarters: () =>
+    request<{ slug: string; name: string; subject: string; bodyText: string; bodyHtml: string }[]>(
+      "/templates/starters",
+    ),
   duplicateTemplate: (id: string) =>
     request<Template>(`/templates/${id}/duplicate`, { method: "POST" }),
   updateTemplate: (id: string, patch: Partial<Template>) =>

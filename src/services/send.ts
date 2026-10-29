@@ -103,7 +103,7 @@ function escapeHtml(s: string): string {
 }
 
 /** Replace {{name}} with variables.name; unknown placeholders are left intact. */
-function renderTemplate(source: string, variables: Record<string, string>): string {
+export function renderTemplate(source: string, variables: Record<string, string>): string {
   return source.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (whole, key: string) =>
     key in variables ? variables[key] : whole,
   );

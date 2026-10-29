@@ -56,7 +56,7 @@ import {
   type Limit,
 } from "../services/ratelimit";
 import { passesTurnstile, turnstileSiteKey } from "../services/turnstile";
-import { mailInvite } from "../services/invite";
+import { INVITE_STARTER, mailInvite } from "../services/invite";
 import { hashPassword, passwordProblem } from "../services/password";
 import {
   createRoutingRule,
@@ -2128,6 +2128,12 @@ api.get("/templates", async (c) => {
     })),
   );
 });
+
+/**
+ * The built-in emails an org takes over by keeping a template with the same
+ * slug. Above /templates/:id, which would otherwise read "starters" as an id.
+ */
+api.get("/templates/starters", (c) => c.json([INVITE_STARTER]));
 
 /**
  * One template.

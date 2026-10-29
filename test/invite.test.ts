@@ -83,6 +83,71 @@ describe("invite mail", () => {
       n: number;
     }>();
     expect(stored?.n).toBe(0);
+
+    // The built-in design: the button survives the layout sanitiser.
+    const html = (send.mock.calls[0] as unknown[] as [{ html: string; subject: string }])[0];
+    expect(html.subject).toBe("Your Alpha mail account");
+    expect(html.html).toContain(`href="https://mail.example/#/accept/${made.inviteToken}"`);
+  });
+
+  it("uses the org's own user-invite template, its sender, and escapes what it fills in", async () => {
+    const now = Date.now();
+    await env.DB.prepare(
+      "insert into templates (id,slug,name,subject,body_text,body_html,from_address,reply_to,org_id,updated_at,created_at) values (?,?,?,?,?,?,?,?,?,?,?)",
+    )
+      .bind(
+        "t1",
+        "user-invite",
+        "Invite",
+        "Welcome {{name}}",
+        "Go: {{link}}",
+        '<p>Hi {{name}}, <a href="{{link}}">start</a></p>',
+        "desk@alpha.test",
+        "",
+        "org_alpha",
+        now,
+        now,
+      )
+      .run();
+    await env.DB.prepare("update organizations set name = ? where id = ?")
+      .bind("<b>Alpha</b>", "org_alpha")
+      .run();
+
+    const send = vi.fn(async () => ({ messageId: "m" }));
+    const res = await call(
+      "/api/users",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: await admin(),
+          "x-mittova-org": "org_alpha",
+        },
+        body: JSON.stringify({ email: "n@p.test", name: "<i>Ann</i>", mailboxIds: ["mb_sales"] }),
+      },
+      { ...env, EMAIL: { send } } as unknown as Env,
+    );
+    const made = await res.json<{ inviteToken: string; inviteMail: unknown }>();
+
+    // The template's sender beats the mailbox the account is given.
+    expect(made.inviteMail).toEqual({ from: "desk@alpha.test" });
+    const sent = (
+      send.mock.calls[0] as unknown[] as [{ subject: string; text: string; html: string }]
+    )[0];
+    expect(sent.subject).toBe("Welcome <i>Ann</i>");
+    expect(sent.text).toBe(`Go: https://mail.example/#/accept/${made.inviteToken}`);
+    expect(sent.html).toContain("&#60;i&#62;Ann");
+    expect(sent.html).not.toContain("<i>");
+  });
+
+  it("serves the built-in invite as a starter, not as a template id", async () => {
+    const res = await call("/api/templates/starters", {
+      headers: { cookie: await admin(), "x-mittova-org": "org_alpha" },
+    });
+    expect(res.status).toBe(200);
+    const [starter] = await res.json<{ slug: string; bodyHtml: string }[]>();
+    expect(starter.slug).toBe("user-invite");
+    expect(starter.bodyHtml).toContain("{{link}}");
   });
 
   it("still creates the account and hands back the link when sending fails", async () => {
