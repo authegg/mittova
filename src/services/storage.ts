@@ -13,6 +13,7 @@
  *   <domain>/raw/<mailboxId>/<messageId>.eml   raw MIME, inbound only
  *   <domain>/att/<messageId>/<attachmentId>    attachment bytes
  *   _backups/<date>/<timestamp>.ndjson         database export
+ *   _brand/<orgId>/<hash>.png                  org logo, public, for mail
  *
  * The leading underscore keeps backups out of the domain namespace: no domain
  * can collide with it, so `list({ prefix: "example.com/" })` never sweeps them
@@ -20,6 +21,11 @@
  */
 
 export const BACKUP_PREFIX = "_backups/";
+
+/** Named by content hash, so a URL never changes what it shows and caches forever. */
+export function logoKey(orgId: string, hash: string): string {
+  return `_brand/${orgId}/${hash}.png`;
+}
 
 /** Domain part of an address, lowercased. Falls back to a bucket for oddities. */
 export function domainOf(address: string): string {

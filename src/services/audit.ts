@@ -27,6 +27,7 @@ export type AuditAction =
   | "domain.remove"
   | "org.create"
   | "org.rename"
+  | "org.logo"
   | "org.delete"
   | "org.export"
   | "backup.run";

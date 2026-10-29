@@ -221,6 +221,7 @@ the leading underscore means no domain can collide with them.
 mittova/<domain>/raw/<mailboxId>/<messageId>.eml   raw MIME, inbound only
 mittova/<domain>/att/<messageId>/<attachmentId>    attachment bytes
 mittova/_backups/<date>/<timestamp>.ndjson         database export
+mittova/_brand/<orgId>/<hash>.png                  org logo, served publicly for mail
 ```
 
 Keys are built in `src/services/storage.ts`; reads always use the key stored on the row, never a

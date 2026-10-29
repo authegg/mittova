@@ -339,6 +339,8 @@ export interface Org {
   templates: number;
   /** Outbound messages per rolling 24h across the whole tenant; 0 is unlimited. */
   dailySendLimit: number;
+  /** Public path of the logo mail templates show, or null. */
+  logoUrl: string | null;
 }
 
 export const api = {
@@ -348,6 +350,13 @@ export const api = {
   updateOrg: (id: string, patch: { name?: string; dailySendLimit?: number }) =>
     request<{ ok: true }>(`/orgs/${id}`, { method: "PATCH", body: body(patch) }),
   deleteOrg: (id: string) => request<{ ok: true }>(`/orgs/${id}`, { method: "DELETE" }),
+  setOrgLogo: (id: string, png: Blob) =>
+    request<{ logoUrl: string }>(`/orgs/${id}/logo`, {
+      method: "PUT",
+      body: png,
+      headers: { "content-type": "image/png" },
+    }),
+  removeOrgLogo: (id: string) => request<{ ok: true }>(`/orgs/${id}/logo`, { method: "DELETE" }),
   /**
    * Exports whichever tenant the caller is in, so it goes through the org
    * header like everything else rather than naming one.

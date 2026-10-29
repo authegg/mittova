@@ -23,6 +23,13 @@ export const organizations = sqliteTable(
      */
     dailySendLimit: integer("daily_send_limit").notNull().default(0),
     createdAt: integer("created_at").notNull(),
+    /**
+     * The org's logo in R2, for mail templates. A new upload gets a new key and
+     * the old object is kept, because mail already sent still points at it.
+     */
+    logoKey: text("logo_key"),
+    logoWidth: integer("logo_width"),
+    logoHeight: integer("logo_height"),
   },
   (t) => [uniqueIndex("organizations_slug_idx").on(t.slug)],
 );

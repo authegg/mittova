@@ -56,7 +56,9 @@ import {
   type Limit,
 } from "../services/ratelimit";
 import { passesTurnstile, turnstileSiteKey } from "../services/turnstile";
-import { INVITE_STARTER, mailInvite } from "../services/invite";
+import { mailInvite, starterFor } from "../services/invite";
+import { MAX_LOGO_BYTES, logoPath, pngSize } from "../services/brand";
+import { logoKey } from "../services/storage";
 import { hashPassword, passwordProblem } from "../services/password";
 import {
   createRoutingRule,
@@ -1518,6 +1520,7 @@ api.get("/orgs", async (c) => {
   return c.json(
     orgs.map((o) => ({
       ...o,
+      logoUrl: o.logoKey ? logoPath(o.id, o.logoKey) : null,
       domains: allDomains.filter((d) => d.orgId === o.id).map((d) => d.domain),
       mailboxes: allMailboxes.filter((m) => m.orgId === o.id).length,
       users: allUsers.filter((u) => u.orgId === o.id).length,
@@ -1661,6 +1664,73 @@ api.patch("/orgs/:id", async (c) => {
     .where(eq(organizations.id, c.req.param("id")));
   audit(db, c.get("scope"), "org.rename", c.req.param("id"), name.trim(), c.executionCtx);
   return c.json({ ok: true });
+});
+
+/**
+ * Set an org's logo: a PNG body, already converted and sized by the dashboard.
+ * The object is never overwritten or deleted, so mail that already went out
+ * keeps showing the logo it was sent with.
+ */
+api.put("/orgs/:id/logo", async (c) => {
+  const db = drizzle(c.env.DB);
+  const org = await db
+    .select({ id: organizations.id })
+    .from(organizations)
+    .where(eq(organizations.id, c.req.param("id")))
+    .get();
+  if (!org) return c.json({ error: "Not found." }, 404);
+
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+  if (bytes.length > MAX_LOGO_BYTES) {
+    return c.json({ error: "The logo must be under 512 KB." }, 413);
+  }
+  const size = pngSize(bytes);
+  if (!size) return c.json({ error: "The logo must be a PNG image." }, 400);
+
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  const hash = [...digest.slice(0, 8)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const key = logoKey(org.id, hash);
+  await c.env.STORAGE.put(key, bytes, {
+    httpMetadata: { contentType: "image/png", cacheControl: "public, max-age=31536000, immutable" },
+  });
+  await db
+    .update(organizations)
+    .set({ logoKey: key, logoWidth: size.width, logoHeight: size.height })
+    .where(eq(organizations.id, org.id));
+  audit(db, c.get("scope"), "org.logo", org.id, "set", c.executionCtx);
+  return c.json({ logoUrl: logoPath(org.id, key) });
+});
+
+api.delete("/orgs/:id/logo", async (c) => {
+  const db = drizzle(c.env.DB);
+  const id = c.req.param("id");
+  await db
+    .update(organizations)
+    .set({ logoKey: null, logoWidth: null, logoHeight: null })
+    .where(eq(organizations.id, id));
+  audit(db, c.get("scope"), "org.logo", id, "removed", c.executionCtx);
+  return c.json({ ok: true });
+});
+
+/**
+ * An org's logo, to anyone: it is shown in mail, which is read signed out.
+ * Only keys under that org's _brand/ prefix are reachable, and only names
+ * shaped like the hashes the upload produces.
+ */
+api.get("/brand/:orgId/logo/:file", async (c) => {
+  const { orgId, file } = c.req.param();
+  if (!/^[\w.-]+$/.test(orgId) || !/^[0-9a-f]{16}\.png$/.test(file)) {
+    return c.json({ error: "not found" }, 404);
+  }
+  const object = await c.env.STORAGE.get(`_brand/${orgId}/${file}`);
+  if (!object) return c.json({ error: "not found" }, 404);
+  return new Response(object.body, {
+    headers: {
+      "content-type": "image/png",
+      "cache-control": "public, max-age=31536000, immutable",
+      "x-content-type-options": "nosniff",
+    },
+  });
 });
 
 /* ------------------------------------------------------------- domains --- */
@@ -2133,7 +2203,17 @@ api.get("/templates", async (c) => {
  * The built-in emails an org takes over by keeping a template with the same
  * slug. Above /templates/:id, which would otherwise read "starters" as an id.
  */
-api.get("/templates/starters", (c) => c.json([INVITE_STARTER]));
+api.get("/templates/starters", async (c) => {
+  const org = c.get("scope").orgId;
+  const row = org
+    ? await drizzle(c.env.DB)
+        .select({ logoKey: organizations.logoKey })
+        .from(organizations)
+        .where(eq(organizations.id, org))
+        .get()
+    : undefined;
+  return c.json([starterFor(Boolean(row?.logoKey))]);
+});
 
 /**
  * One template.

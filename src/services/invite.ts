@@ -4,6 +4,7 @@ import type { Db } from "../db/types";
 import { isDemo } from "./demo-mode";
 import { htmlToText, sanitiseEmailHtml } from "./html";
 import { renderTemplate } from "./send";
+import { logoDisplaySize, logoPath } from "./brand";
 
 /** An org overrides the invite email by keeping a template with this slug. */
 export const INVITE_SLUG = "user-invite";
@@ -56,6 +57,17 @@ export const INVITE_STARTER = {
 </table>`,
 };
 
+/** The org name at the top of the starter, swapped for the logo when there is one. */
+const STARTER_KICKER = `<p style="margin:0 0 24px;font-size:13px;color:#6b6a66;letter-spacing:0.02em;">{{org}}</p>`;
+const STARTER_LOGO = `<img src="{{logo_url}}" alt="{{org}}" width="{{logo_width}}" height="{{logo_height}}" style="display:block;border:0;margin:0 0 24px;">`;
+
+/** The built-in invite, showing the org's logo if it has one. */
+export function starterFor(hasLogo: boolean) {
+  return hasLogo
+    ? { ...INVITE_STARTER, bodyHtml: INVITE_STARTER.bodyHtml.replace(STARTER_KICKER, STARTER_LOGO) }
+    : INVITE_STARTER;
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (ch) => `&#${ch.charCodeAt(0)};`);
 }
@@ -84,7 +96,6 @@ export async function mailInvite(
     .from(templates)
     .where(and(eq(templates.orgId, invite.orgId), eq(templates.slug, INVITE_SLUG)))
     .get();
-  const tpl = custom ?? INVITE_STARTER;
 
   const inOrg = eq(mailboxes.orgId, invite.orgId);
   const pick = (where: ReturnType<typeof and>) =>
@@ -97,16 +108,24 @@ export async function mailInvite(
     (await pick(undefined));
   if (!mailbox) return { error: "This organization has no mailbox to send from." };
 
-  const org = await db
-    .select({ name: organizations.name })
-    .from(organizations)
-    .where(eq(organizations.id, invite.orgId))
-    .get();
+  const org = await db.select().from(organizations).where(eq(organizations.id, invite.orgId)).get();
+  const tpl = custom ?? starterFor(Boolean(org?.logoKey));
+  // Absolute, from the host the invite link uses: mail is read far from here.
+  const logo =
+    org?.logoKey && org.logoWidth && org.logoHeight
+      ? {
+          url: new URL(invite.url).origin + logoPath(org.id, org.logoKey),
+          ...logoDisplaySize(org.logoWidth, org.logoHeight),
+        }
+      : null;
   const vars = {
     name: invite.name,
     email: invite.to,
     org: org?.name ?? env.APP_NAME,
     link: invite.url,
+    logo_url: logo?.url ?? "",
+    logo_width: String(logo?.width ?? ""),
+    logo_height: String(logo?.height ?? ""),
   };
   const htmlVars = Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, escapeHtml(v)]));
   // Gmail turns anything shaped like a domain or an address into a blue link,

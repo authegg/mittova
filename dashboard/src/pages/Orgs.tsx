@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { api, setActiveOrg, type Org } from "../api";
 import { useAsync, useToast } from "../hooks";
 import { Card, Confirm, EmptyState, Sheet, TableSkeleton, relativeTime } from "../components/ui";
 import Icon from "../components/Icon";
+import { toEmailPng } from "../lib/emailPng";
 
 /**
  * The clients this deployment serves.
@@ -104,7 +105,7 @@ export default function Orgs() {
                           Open
                         </button>
                         <button className="sm" onClick={() => setRenaming(o)}>
-                          Rename
+                          Details
                         </button>
                         <button
                           className="sm"
@@ -149,18 +150,28 @@ export default function Orgs() {
 
       {renaming && (
         <NameSheet
-          title={`Rename ${renaming.name}`}
+          title={renaming.name}
           label="Name"
           hint="A label only. The identifier every row in this tenant references does not change."
           initial={renaming.name}
           submitLabel="Save"
           onClose={() => setRenaming(null)}
           onSubmit={async (name) => {
-            await api.updateOrg(renaming.id, { name });
-            toast("Renamed");
+            if (name !== renaming.name) {
+              await api.updateOrg(renaming.id, { name });
+              toast("Saved");
+            }
             list.reload();
           }}
-        />
+        >
+          <LogoField
+            org={renaming}
+            onChange={(logoUrl) => {
+              setRenaming({ ...renaming, logoUrl });
+              list.reload();
+            }}
+          />
+        </NameSheet>
       )}
 
       {deleting && (
@@ -190,7 +201,83 @@ export default function Orgs() {
   );
 }
 
-/** Create and rename differ only in their words, so they share a sheet. */
+/**
+ * The logo mail templates show as {{logo_url}}. Whatever is picked is
+ * converted to a PNG here, since that is all mail clients reliably display,
+ * and it is saved straight away rather than with the name.
+ */
+function LogoField({ org, onChange }: { org: Org; onChange: (logoUrl: string | null) => void }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const picker = useRef<HTMLInputElement>(null);
+
+  async function upload(file: File) {
+    setBusy(true);
+    try {
+      const { logoUrl } = await api.setOrgLogo(org.id, await toEmailPng(file));
+      onChange(logoUrl);
+      toast("Logo saved");
+    } catch (err) {
+      toast((err as Error).message, "bad");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="field">
+      <span>Logo</span>
+      {org.logoUrl ? (
+        <div className="logo-preview">
+          <img src={org.logoUrl} alt={`${org.name} logo`} />
+        </div>
+      ) : (
+        <div className="hint">None yet. Invite emails show the organization's name instead.</div>
+      )}
+      <div className="row">
+        <button
+          type="button"
+          className="sm"
+          disabled={busy}
+          onClick={() => picker.current?.click()}
+        >
+          {busy ? "Uploading" : org.logoUrl ? "Replace" : "Upload logo"}
+        </button>
+        <input
+          ref={picker}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (file) void upload(file);
+          }}
+        />
+        {org.logoUrl && (
+          <button
+            type="button"
+            className="sm"
+            disabled={busy}
+            onClick={async () => {
+              await api.removeOrgLogo(org.id);
+              onChange(null);
+              toast("Logo removed");
+            }}
+          >
+            Remove
+          </button>
+        )}
+      </div>
+      <span className="hint">
+        PNG, JPG or SVG. Used in mail as <span className="mono">{"{{logo_url}}"}</span>, including
+        the built-in invite. Mail already sent keeps the logo it went out with.
+      </span>
+    </div>
+  );
+}
+
+/** Create and edit share a sheet; editing adds the logo below the name. */
 function NameSheet({
   title,
   label,
@@ -199,6 +286,7 @@ function NameSheet({
   submitLabel,
   onClose,
   onSubmit,
+  children,
 }: {
   title: string;
   label: string;
@@ -207,6 +295,7 @@ function NameSheet({
   submitLabel: string;
   onClose: () => void;
   onSubmit: (name: string) => Promise<void>;
+  children?: React.ReactNode;
 }) {
   const [name, setName] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -246,6 +335,7 @@ function NameSheet({
           <span className="hint">{hint}</span>
         </label>
       </form>
+      {children && <div style={{ marginTop: 18 }}>{children}</div>}
     </Sheet>
   );
 }

@@ -15,6 +15,13 @@
       "when": 1793173359334,
       "tag": "0001_webhook_addresses",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793264293149,
+      "tag": "0002_org_logo",
+      "breakpoints": true
     }
   ]
 }
