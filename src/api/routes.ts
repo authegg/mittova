@@ -584,14 +584,21 @@ api.post("/mailboxes", requireOwner, async (c) => {
   }
 
   const scope = c.get("scope");
-  const org = writeOrg(scope);
+  const db = drizzle(c.env.DB);
+  const requested = (body.domain ?? "").trim().toLowerCase();
+
+  // A platform administrator on "All organizations" has no org to write into,
+  // but the domain they named belongs to exactly one, read here on the server.
+  let org = writeOrg(scope);
+  if (!org && scope.isPlatformAdmin && !scope.orgId && requested) {
+    org = (await listDomains(db, c.env)).find((d) => d.domain === requested)?.orgId ?? null;
+  }
   if (!org) return c.json(PICK_ORG, 400);
 
-  const db = drizzle(c.env.DB);
-  // Scoped to the caller's own org, so a mailbox can only ever be created on a
-  // domain that tenant owns.
+  // Scoped to that org, so a mailbox can only ever be created on a domain the
+  // tenant owns.
   const domains = (await listDomains(db, c.env, org)).map((d) => d.domain);
-  const domain = (body.domain ?? domains[0] ?? "").trim().toLowerCase();
+  const domain = requested || domains[0] || "";
   if (!domains.includes(domain)) {
     return c.json(
       { error: `${domain || "That domain"} is not configured on this deployment.` },

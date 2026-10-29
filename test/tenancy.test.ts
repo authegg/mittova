@@ -746,3 +746,32 @@ describe("webhook mailbox filter", () => {
     expect(patch.status).toBe(400);
   });
 });
+
+describe("creating a mailbox from All organizations", () => {
+  beforeEach(seed);
+
+  it("lands in the org that owns the named domain", async () => {
+    const admin = await signIn(undefined, "test-admin-password");
+    const res = await call(
+      "/api/mailboxes",
+      { method: "POST", body: json({ address: "kenji", domain: "beta.test" }) },
+      admin,
+    );
+    expect(res.status).toBe(201);
+    expect((await res.json<{ address: string; orgId: string }>()).orgId).toBe("org_beta");
+  });
+
+  it("still refuses an org owner a domain belonging to another org", async () => {
+    const owner = await makeOwner("org_alpha", "own@alpha.test");
+    const res = await call(
+      "/api/mailboxes",
+      { method: "POST", body: json({ address: "kenji", domain: "beta.test" }) },
+      owner,
+    );
+    expect(res.status).toBe(400);
+    const made = await env.DB.prepare(
+      "select 1 from mailboxes where address = 'kenji@beta.test'",
+    ).first();
+    expect(made).toBeNull();
+  });
+});
