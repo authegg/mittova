@@ -429,8 +429,14 @@ api.get("/auth/invite/:token", async (c) => {
   return c.json({ email: user.email, name: user.name });
 });
 
-/** Issue a fresh invite, for one that expired or never arrived. */
-api.post("/users/:id/invite", async (c) => {
+/**
+ * Issue a fresh invite, for one that expired or never arrived.
+ *
+ * requireOwner is on the route itself: it is registered above the /users
+ * middleware loop, and Hono runs handlers in registration order, so without it
+ * this ran with no scope at all.
+ */
+api.post("/users/:id/invite", requireOwner, async (c) => {
   const scope = c.get("scope");
   const db = drizzle(c.env.DB);
   const target = await db

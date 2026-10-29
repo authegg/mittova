@@ -90,4 +90,28 @@ describe("invite mail", () => {
     expect(made.inviteToken).toMatch(/^[0-9a-f]{64}$/);
     expect("error" in made.inviteMail).toBe(true);
   });
+
+  // The row's Invite button: this route once ran ahead of its auth middleware
+  // and answered 500 to everyone.
+  it("re-sends an invite from the row's Invite button, and refuses a stranger", async () => {
+    const send = vi.fn(async () => ({ messageId: "m" }));
+    const withMail = { ...env, EMAIL: { send } } as unknown as Env;
+    const made = await invite(withMail, ["mb_desk"]);
+    const id = (made as unknown as { id: string }).id;
+
+    const again = await call(
+      `/api/users/${id}/invite`,
+      { method: "POST", headers: { cookie: await admin() } },
+      withMail,
+    );
+    expect(again.status).toBe(200);
+    const body = await again.json<{ inviteToken: string; inviteMail: unknown }>();
+    expect(body.inviteToken).not.toBe(made.inviteToken);
+    expect(body.inviteMail).toEqual({ from: "desk@alpha.test" });
+    expect(send).toHaveBeenCalledTimes(2);
+
+    const stranger = await call(`/api/users/${id}/invite`, { method: "POST" }, withMail);
+    expect(stranger.status).toBe(401);
+    expect(send).toHaveBeenCalledTimes(2);
+  });
 });
