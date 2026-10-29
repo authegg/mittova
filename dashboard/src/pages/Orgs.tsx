@@ -98,7 +98,10 @@ export default function Orgs() {
                           className="sm"
                           onClick={() => {
                             setActiveOrg(o.id);
-                            window.location.hash = "/overview";
+                            // replaceState fires no hashchange, so Overview does not
+                            // start loading only for the reload to cancel it, which
+                            // Firefox reports as "NetworkError".
+                            history.replaceState(null, "", "#/overview");
                             window.location.reload();
                           }}
                         >
