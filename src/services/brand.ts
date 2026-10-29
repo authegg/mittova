@@ -25,9 +25,10 @@ export function logoPath(orgId: string, key: string): string {
 
 /**
  * The size to show it at in mail: uploads are kept at twice that for sharp
- * screens, then fitted inside 180 by 64 so a tall mark does not dominate.
+ * screens, then fitted inside 180 by 96: wide wordmarks stop at 180, and a
+ * tall crest still gets enough height to be read.
  */
 export function logoDisplaySize(width: number, height: number): { width: number; height: number } {
-  const scale = Math.min(0.5, 180 / width, 64 / height);
+  const scale = Math.min(0.5, 180 / width, 96 / height);
   return { width: Math.round(width * scale), height: Math.round(height * scale) };
 }
