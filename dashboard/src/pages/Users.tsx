@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { activeOrg, api, type Mailbox, type User } from "../api";
+import { activeOrg, api, type InviteMail, type Mailbox, type User } from "../api";
 import { useAsync, useToast } from "../hooks";
 import {
   Badge,
@@ -89,7 +89,7 @@ function UserForm({
   viewingOrgId: string;
   isPlatformAdmin: boolean;
   onClose: () => void;
-  onSaved: (created?: { email: string; inviteToken: string | null; password: string }) => void;
+  onSaved: (created?: Handoff) => void;
 }) {
   const [email, setEmail] = useState(user?.email ?? "");
   const [name, setName] = useState(user?.name ?? "");
@@ -103,6 +103,10 @@ function UserForm({
   const [assigned, setAssigned] = useState<string[]>(user?.mailboxIds ?? []);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Creating from "All organizations": the account still needs a home org.
+  const pickOrg = !user && isPlatformAdmin && !viewingOrgId;
+  const orgs = useAsync(() => (pickOrg ? api.orgs() : Promise.resolve([])), [pickOrg]);
+  const [pickedOrg, setPickedOrg] = useState("");
 
   /**
    * The tenant that bounds this account: its own when editing, the one in view
@@ -110,7 +114,7 @@ function UserForm({
    * "All organizations" the flat list mixed every tenant's addresses together
    * with nothing to tell them apart.
    */
-  const targetOrg = user?.orgId || viewingOrgId;
+  const targetOrg = user?.orgId || viewingOrgId || pickedOrg;
   // The one exception, matching the server: a platform administrator on "All
   // organizations" may grant an existing account mailboxes from any org.
   const crossOrg = Boolean(user) && isPlatformAdmin && !viewingOrgId;
@@ -146,14 +150,17 @@ function UserForm({
         });
         onSaved();
       } else {
-        const made = await api.createUser({
-          email,
-          name,
-          role,
-          mailboxIds: assigned,
-          ...(byInvite ? {} : { password }),
-        });
-        onSaved({ email, inviteToken: made.inviteToken, password });
+        const made = await api.createUser(
+          {
+            email,
+            name,
+            role,
+            mailboxIds: assigned,
+            ...(byInvite ? {} : { password }),
+          },
+          pickOrg ? pickedOrg : undefined,
+        );
+        onSaved({ email, inviteToken: made.inviteToken, inviteMail: made.inviteMail, password });
       }
     } catch (err) {
       setError((err as Error).message);
@@ -197,6 +204,32 @@ function UserForm({
           <span>Name</span>
           <input value={name} onChange={(e) => setName(e.target.value)} />
         </label>
+
+        {pickOrg && (
+          <label className="field">
+            <span>Organization</span>
+            <select
+              value={pickedOrg}
+              onChange={(e) => {
+                setPickedOrg(e.target.value);
+                setAssigned([]);
+              }}
+              required
+            >
+              <option value="" disabled>
+                Choose one
+              </option>
+              {(orgs.data ?? []).map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </select>
+            <span className="hint">
+              Their home: its templates, contacts and settings are the ones they use.
+            </span>
+          </label>
+        )}
 
         <label className="field">
           <span>Role</span>
@@ -265,12 +298,9 @@ function UserForm({
           {role === "owner" && !crossOrg ? (
             <div className="notice">Owners can already see every mailbox.</div>
           ) : !targetOrg ? (
-            // Creating from the all-orgs view has no tenant to put the account
-            // in, and the server refuses it. Saying so beats listing every
-            // tenant's mailboxes for a form that cannot be submitted.
-            <div className="notice">
-              Choose an organization in the switcher above to create a user in it.
-            </div>
+            // Until an org is picked there is nothing to list: every tenant's
+            // mailboxes at once was the confusing part.
+            <div className="hint">Choose their organization first.</div>
           ) : choices.length === 0 ? (
             <div className="hint">This organization has no mailboxes yet.</div>
           ) : (
@@ -278,9 +308,11 @@ function UserForm({
               <div className="hint">
                 {crossOrg
                   ? "Mailboxes from any organization. Templates and contacts stay those of the account's own."
-                  : isPlatformAdmin
-                    ? "Switch to All organizations to grant mailboxes from other organizations."
-                    : "An account can only be given mailboxes from its own organization."}
+                  : pickOrg
+                    ? "This organization's mailboxes. Edit the account afterwards to add ones from other organizations."
+                    : isPlatformAdmin
+                      ? "Switch to All organizations to grant mailboxes from other organizations."
+                      : "An account can only be given mailboxes from its own organization."}
               </div>
               {byDomain.map(([domain, boxes]) => (
                 <div key={domain} className="stack" style={{ gap: 6 }}>
@@ -311,6 +343,13 @@ function UserForm({
   );
 }
 
+interface Handoff {
+  email: string;
+  inviteToken: string | null;
+  inviteMail?: InviteMail | null;
+  password: string;
+}
+
 /** The page someone opens to accept, which lives outside the signed-in app. */
 function inviteUrl(token: string): string {
   return `${window.location.origin}/#/accept/${token}`;
@@ -327,11 +366,7 @@ export default function Users({
   const list = useAsync(() => api.users(), []);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
-  const [handoff, setHandoff] = useState<{
-    email: string;
-    inviteToken: string | null;
-    password: string;
-  } | null>(null);
+  const [handoff, setHandoff] = useState<Handoff | null>(null);
   const [deleting, setDeleting] = useState<User | null>(null);
 
   const addressById = new Map(mailboxes.map((m) => [m.id, m.address]));
@@ -415,8 +450,8 @@ export default function Users({
                           title="Issue a fresh invite link"
                           onClick={async () => {
                             try {
-                              const { inviteToken, email } = await api.reinvite(u.id);
-                              setHandoff({ email, inviteToken, password: "" });
+                              const { inviteToken, email, inviteMail } = await api.reinvite(u.id);
+                              setHandoff({ email, inviteToken, inviteMail, password: "" });
                             } catch (err) {
                               toast((err as Error).message, "bad");
                             }
@@ -476,7 +511,13 @@ export default function Users({
 
       {handoff && (
         <Sheet
-          title={handoff.inviteToken ? "Invite ready" : "User created"}
+          title={
+            !handoff.inviteToken
+              ? "User created"
+              : handoff.inviteMail && "from" in handoff.inviteMail
+                ? "Invite sent"
+                : "Invite ready"
+          }
           onClose={() => setHandoff(null)}
           footer={
             <button className="primary" onClick={() => setHandoff(null)}>
@@ -487,10 +528,19 @@ export default function Users({
           <div className="stack">
             {handoff.inviteToken ? (
               <>
-                <div className="notice">
-                  Send them this link. It works once, expires in seven days, and they choose their
-                  own password — so no password is transmitted by anyone.
-                </div>
+                {handoff.inviteMail && "from" in handoff.inviteMail ? (
+                  <div className="notice">
+                    Emailed to {handoff.email} from{" "}
+                    <span className="mono">{handoff.inviteMail.from}</span>. It is not kept in that
+                    mailbox's Sent folder. If it does not arrive, send them the link below yourself.
+                  </div>
+                ) : (
+                  <div className="notice bad">
+                    The invite could not be emailed
+                    {handoff.inviteMail ? `: ${handoff.inviteMail.error}` : "."} Send them this link
+                    yourself. It works once and expires in seven days.
+                  </div>
+                )}
                 <label className="field">
                   <span>Email</span>
                   <input readOnly className="mono" value={handoff.email} />

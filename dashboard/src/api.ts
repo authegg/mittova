@@ -325,6 +325,9 @@ const splitList = (s?: string) =>
     .map((x) => x.trim())
     .filter(Boolean);
 
+/** Whether an invite link was emailed, and from which address, or why not. */
+export type InviteMail = { from: string } | { error: string };
+
 export interface Org {
   id: string;
   name: string;
@@ -370,16 +373,28 @@ export const api = {
       body: body({ token, password, turnstileToken }),
     }),
   reinvite: (id: string) =>
-    request<{ inviteToken: string; email: string }>(`/users/${id}/invite`, { method: "POST" }),
+    request<{ inviteToken: string; email: string; inviteMail: InviteMail }>(`/users/${id}/invite`, {
+      method: "POST",
+    }),
 
-  createUser: (u: {
-    email: string;
-    name: string;
-    role: "owner" | "member";
-    /** Omitted to invite instead, which is the default. */
-    password?: string;
-    mailboxIds: string[];
-  }) => request<User & { inviteToken: string | null }>("/users", { method: "POST", body: body(u) }),
+  createUser: (
+    u: {
+      email: string;
+      name: string;
+      role: "owner" | "member";
+      /** Omitted to invite instead, which is the default. */
+      password?: string;
+      mailboxIds: string[];
+    },
+    orgId?: string,
+  ) =>
+    request<User & { inviteToken: string | null; inviteMail: InviteMail | null }>("/users", {
+      method: "POST",
+      body: body(u),
+      // From "All organizations", the org picked in the form; the server honours
+      // the header only for platform administrators, as it does for the switcher.
+      headers: orgId ? { "x-mittova-org": orgId } : undefined,
+    }),
   updateUser: (
     id: string,
     patch: {

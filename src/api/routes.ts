@@ -56,6 +56,7 @@ import {
   type Limit,
 } from "../services/ratelimit";
 import { passesTurnstile, turnstileSiteKey } from "../services/turnstile";
+import { mailInvite } from "../services/invite";
 import { hashPassword, passwordProblem } from "../services/password";
 import {
   createRoutingRule,
@@ -186,6 +187,11 @@ function grantableLinks(db: ReturnType<typeof drizzle>, scope: Scope, orgId: str
  * a forgotten invite in an inbox is not a standing way in.
  */
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** The dashboard page that accepts an invite, on the host the request came in on. */
+function acceptUrl(requestUrl: string, token: string): string {
+  return `${new URL(requestUrl).origin}/#/accept/${token}`;
+}
 
 /** 32 random bytes, hex. Unguessable, and never stored in this form. */
 function generateInviteToken(): string {
@@ -440,7 +446,19 @@ api.post("/users/:id/invite", async (c) => {
     .set({ inviteHash: await sha256Hex(token), inviteExpiresAt: Date.now() + INVITE_TTL_MS })
     .where(eq(users.id, target.id));
   audit(db, scope, "user.invite", target.email, "", c.executionCtx);
-  return c.json({ inviteToken: token, email: target.email });
+  const assigned = await db
+    .select({ id: userMailboxes.mailboxId })
+    .from(userMailboxes)
+    .where(eq(userMailboxes.userId, target.id))
+    .all();
+  const inviteMail = await mailInvite(db, c.env, {
+    orgId: target.orgId,
+    preferMailboxIds: assigned.map((a) => a.id),
+    to: target.email,
+    name: target.name,
+    url: acceptUrl(c.req.url, token),
+  });
+  return c.json({ inviteToken: token, email: target.email, inviteMail });
 });
 
 /** Change your own password. Available to any signed-in user. */
@@ -1309,10 +1327,20 @@ api.post("/users", async (c) => {
       .values(ids.map((mailboxId) => ({ userId: row.id, mailboxId, createdAt: Date.now() })));
   }
 
+  const inviteMail = inviteToken
+    ? await mailInvite(db, c.env, {
+        orgId: org,
+        preferMailboxIds: ids,
+        to: email,
+        name: row.name,
+        url: acceptUrl(c.req.url, inviteToken),
+      })
+    : null;
+
   const { passwordHash, passwordSalt, passwordIterations, inviteHash, ...safe } = row;
   // The token is returned once, here, exactly like an API key: it is not
   // recoverable afterwards, and it is not stored in a form that could be.
-  return c.json({ ...safe, mailboxIds: ids, inviteToken }, 201);
+  return c.json({ ...safe, mailboxIds: ids, inviteToken, inviteMail }, 201);
 });
 
 api.patch("/users/:id", async (c) => {
